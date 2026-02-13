@@ -1,6 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Scan Product - BharatScan{% endblock %}
 
+{% block extra_css %}
+<style>
+    #reader {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    #reader video {
+        border-radius: 12px;
+    }
+    #reader__scan_region {
+        border-radius: 12px;
+    }
+    #reader__dashboard {
+        border-radius: 0 0 12px 12px;
+    }
+    .scan-success-box {
+        animation: pulse-green 1s infinite;
+    }
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(40, 167, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
@@ -37,33 +66,38 @@
                 <div class="tab-pane fade show active" id="camera-scan" role="tabpanel">
                     <div class="card shadow-sm border-0">
                         <div class="card-body text-center p-4">
-                            <div id="camera-container" class="position-relative mb-3">
-                                <video id="camera-feed" class="w-100 rounded" autoplay playsinline 
-                                       style="max-height: 400px; background: #000;"></video>
-                                <div class="scan-overlay">
-                                    <div class="scan-guide"></div>
-                                </div>
-                                <canvas id="camera-canvas" style="display:none;"></canvas>
-                            </div>
                             
+                            <!-- Scanner Container -->
+                            <div id="reader" class="mb-3"></div>
+                            
+                            <!-- Status Messages -->
                             <div id="camera-status" class="mb-3">
                                 <p class="text-muted">
                                     <i class="bi bi-info-circle"></i> 
-                                    Click "Start Camera" and position the barcode within the scanning area
+                                    Click "Start Scanner" and point your camera at a barcode
                                 </p>
                             </div>
+
+                            <!-- Scan Result Box (hidden initially) -->
+                            <div id="scanResultBox" style="display:none;" class="mb-3">
+                                <div class="alert alert-success scan-success-box">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <strong>Barcode Detected!</strong>
+                                    <br>
+                                    <span id="scannedBarcodeText" class="fs-5 fw-bold"></span>
+                                    <br>
+                                    <small>Redirecting to product page...</small>
+                                </div>
+                            </div>
                             
+                            <!-- Control Buttons -->
                             <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                <button id="startCameraBtn" class="btn btn-india" onclick="startCamera()">
-                                    <i class="bi bi-camera-fill"></i> Start Camera
+                                <button id="startScanBtn" class="btn btn-india btn-lg" onclick="startScanner()">
+                                    <i class="bi bi-camera-fill"></i> Start Scanner
                                 </button>
-                                <button id="captureBtn" class="btn btn-success" onclick="captureFrame()" 
+                                <button id="stopScanBtn" class="btn btn-danger btn-lg" onclick="stopScanner()" 
                                         style="display:none;">
-                                    <i class="bi bi-camera"></i> Capture & Scan
-                                </button>
-                                <button id="stopCameraBtn" class="btn btn-danger" onclick="stopCamera()" 
-                                        style="display:none;">
-                                    <i class="bi bi-stop-fill"></i> Stop
+                                    <i class="bi bi-stop-fill"></i> Stop Scanner
                                 </button>
                             </div>
 
@@ -71,8 +105,7 @@
                                 <small class="text-muted">
                                     <i class="bi bi-lightbulb"></i> 
                                     <strong>Tips:</strong> Hold steady, ensure good lighting, 
-                                    and keep barcode within the orange guide box.
-                                    Auto-scan runs every 1.5 seconds.
+                                    keep barcode centered. Works best with rear camera on phones.
                                 </small>
                             </div>
                         </div>
@@ -90,7 +123,7 @@
                                     <p class="mt-3 mb-1 fw-medium">Drag & drop a barcode image here</p>
                                     <p class="text-muted small">or click to browse files</p>
                                     <input type="file" id="imageInput" name="image" 
-                                           accept="image/*" class="d-none">
+                                           accept="image/*" class="d-none" capture="environment">
                                     <button type="button" class="btn btn-outline-india mt-2" 
                                             onclick="document.getElementById('imageInput').click()">
                                         <i class="bi bi-image"></i> Choose Image
@@ -118,6 +151,12 @@
 
                             <!-- Upload Result -->
                             <div id="uploadResult" style="display:none;"></div>
+
+                            <div class="mt-3 text-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-phone"></i> On mobile? Use the camera option above for best results!
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -134,7 +173,7 @@
                                     <input type="text" id="manualBarcode" class="form-control form-control-lg" 
                                            placeholder="e.g., 8901058851854"
                                            maxlength="50" autofocus
-                                           pattern="[A-Za-z0-9\-\.]*">
+                                           inputmode="numeric">
                                     <div class="form-text">
                                         Enter the barcode number printed on the product packaging.
                                         Usually 8 or 13 digits for Indian products starting with 890.
@@ -155,31 +194,43 @@
                                 <div class="d-flex flex-wrap gap-2">
                                     <button class="btn btn-sm btn-outline-secondary quick-barcode" 
                                             data-barcode="8901058851854">
-                                        Parle-G
+                                        🍪 Parle-G
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary quick-barcode" 
                                             data-barcode="8901262150255">
-                                        Maggi
+                                        🍜 Maggi
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
+                                            data-barcode="8901030793424">
+                                        🥛 Amul Milk
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary quick-barcode" 
                                             data-barcode="8901790753456">
-                                        Crocin
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901689152012">
-                                        Himalaya Ashvagandha
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8906009540115">
-                                        Mamaearth Face Wash
+                                        💊 Crocin
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary quick-barcode" 
                                             data-barcode="8901790789456">
-                                        Azithral 500
+                                        💊 Azithral
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
+                                            data-barcode="8901689152012">
+                                        🌿 Himalaya Ashvagandha
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
+                                            data-barcode="8901689157891">
+                                        🌿 Dabur Chyawanprash
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
+                                            data-barcode="8906009540115">
+                                        🧴 Mamaearth Face Wash
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary quick-barcode" 
                                             data-barcode="8904245700577">
-                                        Biotique Shampoo
+                                        💇 Biotique Shampoo
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
+                                            data-barcode="8901030718960">
+                                        💇 Dove Shampoo
                                     </button>
                                 </div>
                             </div>
@@ -202,7 +253,6 @@
                         <span class="badge bg-light text-dark border">Code 128</span>
                         <span class="badge bg-light text-dark border">Code 39</span>
                         <span class="badge bg-light text-dark border">QR Code</span>
-                        <span class="badge bg-light text-dark border">Data Matrix</span>
                     </div>
                     <p class="text-center text-muted small mt-2 mb-0">
                         🇮🇳 Indian products use EAN-13 barcodes starting with <strong>890</strong> (GS1 India)
@@ -215,14 +265,287 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+<!-- Html5-QRCode Library - Browser Based Scanner -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <script>
+// ==================== CAMERA SCANNER ====================
+var html5QrcodeScanner = null;
+var isScanning = false;
+
+function startScanner() {
+    var startBtn = document.getElementById('startScanBtn');
+    var stopBtn = document.getElementById('stopScanBtn');
+    var status = document.getElementById('camera-status');
+    
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'inline-block';
+    
+    status.innerHTML = '<p class="text-warning"><i class="bi bi-hourglass-split"></i> Starting camera...</p>';
+
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    
+    var config = {
+        fps: 10,
+        qrbox: { width: 250, height: 150 },
+        aspectRatio: 1.777778,
+        formatsToSupport: [
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.QR_CODE,
+        ]
+    };
+
+    html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        onScanFailure
+    ).then(function() {
+        isScanning = true;
+        status.innerHTML = '<p class="text-success"><i class="bi bi-camera-fill"></i> Camera active! Point at a barcode.</p>';
+    }).catch(function(err) {
+        console.error("Camera error:", err);
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        
+        var errorMsg = 'Could not start camera. ';
+        if (err.toString().includes('NotAllowedError')) {
+            errorMsg += 'Please allow camera permission in your browser.';
+        } else if (err.toString().includes('NotFoundError')) {
+            errorMsg += 'No camera found on this device.';
+        } else {
+            errorMsg += 'Try using Manual Entry tab instead.';
+        }
+        
+        status.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ' + errorMsg + '</div>';
+    });
+}
+
+function stopScanner() {
+    if (html5QrcodeScanner && isScanning) {
+        html5QrcodeScanner.stop().then(function() {
+            html5QrcodeScanner.clear();
+            isScanning = false;
+            
+            document.getElementById('startScanBtn').style.display = 'inline-block';
+            document.getElementById('stopScanBtn').style.display = 'none';
+            document.getElementById('camera-status').innerHTML = 
+                '<p class="text-muted"><i class="bi bi-info-circle"></i> Scanner stopped. Click "Start Scanner" to scan again.</p>';
+        }).catch(function(err) {
+            console.error("Stop error:", err);
+        });
+    }
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+    // Stop scanning immediately
+    if (html5QrcodeScanner && isScanning) {
+        html5QrcodeScanner.stop().then(function() {
+            isScanning = false;
+        }).catch(function(err) {
+            console.error(err);
+        });
+    }
+    
+    // Play beep sound
+    playBeep();
+    
+    // Show success message
+    var resultBox = document.getElementById('scanResultBox');
+    var barcodeText = document.getElementById('scannedBarcodeText');
+    var status = document.getElementById('camera-status');
+    
+    barcodeText.textContent = decodedText;
+    resultBox.style.display = 'block';
+    status.innerHTML = '';
+    
+    document.getElementById('startScanBtn').style.display = 'none';
+    document.getElementById('stopScanBtn').style.display = 'none';
+    
+    // Check if Indian barcode
+    var isIndian = decodedText.length >= 3 && decodedText.substring(0, 3) === '890';
+    if (isIndian) {
+        barcodeText.textContent = '🇮🇳 ' + decodedText + ' (Indian Product)';
+    }
+    
+    // Redirect to product page after 1.5 seconds
+    setTimeout(function() {
+        window.location.href = '/result/' + decodedText;
+    }, 1500);
+}
+
+function onScanFailure(error) {
+    // Ignore scan failures (happens continuously when no barcode is in view)
+}
+
+function playBeep() {
+    try {
+        var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var oscillator = audioCtx.createOscillator();
+        var gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 1200;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.3;
+        oscillator.start();
+        setTimeout(function() {
+            oscillator.stop();
+            audioCtx.close();
+        }, 200);
+    } catch (e) {}
+}
+
+// ==================== IMAGE UPLOAD ====================
+var uploadForm = document.getElementById('uploadForm');
+var imageInput = document.getElementById('imageInput');
+
+if (imageInput) {
+    imageInput.addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        
+        var preview = document.getElementById('imagePreview');
+        var previewImg = document.getElementById('previewImg');
+        var dropZone = document.getElementById('dropZone');
+        
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            previewImg.src = ev.target.result;
+            preview.style.display = 'block';
+            dropZone.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+if (uploadForm) {
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        var fileInput = document.getElementById('imageInput');
+        if (!fileInput || !fileInput.files[0]) {
+            alert('Please select an image first.');
+            return;
+        }
+        
+        var file = fileInput.files[0];
+        var uploadBtn = document.getElementById('uploadBtn');
+        var resultDiv = document.getElementById('uploadResult');
+        
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Scanning...';
+        
+        // Use html5-qrcode to scan from file
+        var html5Qrcode = new Html5Qrcode("uploadScanTemp");
+        
+        // Create a temporary hidden div
+        var tempDiv = document.getElementById('uploadScanTemp');
+        if (!tempDiv) {
+            tempDiv = document.createElement('div');
+            tempDiv.id = 'uploadScanTemp';
+            tempDiv.style.display = 'none';
+            document.body.appendChild(tempDiv);
+        }
+        
+        html5Qrcode.scanFile(file, true)
+            .then(function(decodedText) {
+                playBeep();
+                resultDiv.innerHTML = '<div class="alert alert-success mt-3"><i class="bi bi-check-circle-fill"></i> Barcode found: <strong>' + decodedText + '</strong>. Redirecting...</div>';
+                resultDiv.style.display = 'block';
+                
+                setTimeout(function() {
+                    window.location.href = '/result/' + decodedText;
+                }, 1000);
+            })
+            .catch(function(err) {
+                resultDiv.innerHTML = '<div class="alert alert-warning mt-3"><i class="bi bi-exclamation-triangle"></i> No barcode detected in image. Try a clearer photo or use Manual Entry.</div>';
+                resultDiv.style.display = 'block';
+                
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="bi bi-search"></i> Scan Barcode from Image';
+            });
+    });
+}
+
+function clearUpload() {
+    var imageInput = document.getElementById('imageInput');
+    var preview = document.getElementById('imagePreview');
+    var dropZone = document.getElementById('dropZone');
+    var resultDiv = document.getElementById('uploadResult');
+    
+    if (imageInput) imageInput.value = '';
+    if (preview) preview.style.display = 'none';
+    if (dropZone) dropZone.style.display = 'block';
+    if (resultDiv) resultDiv.style.display = 'none';
+}
+
+// Drag and drop
+var dropZone = document.getElementById('dropZone');
+if (dropZone) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+    
+    ['dragenter', 'dragover'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function() {
+            dropZone.classList.add('dragover');
+        }, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(function(eventName) {
+        dropZone.addEventListener(eventName, function() {
+            dropZone.classList.remove('dragover');
+        }, false);
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            var imageInput = document.getElementById('imageInput');
+            var dt = new DataTransfer();
+            dt.items.add(files[0]);
+            imageInput.files = dt.files;
+            imageInput.dispatchEvent(new Event('change'));
+        }
+    }, false);
+}
+
+// ==================== MANUAL ENTRY ====================
+var manualForm = document.getElementById('manualForm');
+if (manualForm) {
+    manualForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var barcode = document.getElementById('manualBarcode').value.trim();
+        if (barcode) {
+            window.location.href = '/result/' + barcode;
+        } else {
+            alert('Please enter a barcode number.');
+        }
+    });
+}
+
 // Quick barcode buttons
 document.querySelectorAll('.quick-barcode').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var barcode = this.getAttribute('data-barcode');
         window.location.href = '/result/' + barcode;
     });
+});
+
+// Cleanup on page leave
+window.addEventListener('beforeunload', function() {
+    if (html5QrcodeScanner && isScanning) {
+        html5QrcodeScanner.stop();
+    }
 });
 </script>
 {% endblock %}
