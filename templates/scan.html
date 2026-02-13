@@ -1,551 +1,461 @@
 {% extends "base.html" %}
+
 {% block title %}Scan Product - BharatScan{% endblock %}
 
-{% block extra_css %}
-<style>
-    #reader {
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    #reader video {
-        border-radius: 12px;
-    }
-    #reader__scan_region {
-        border-radius: 12px;
-    }
-    #reader__dashboard {
-        border-radius: 0 0 12px 12px;
-    }
-    .scan-success-box {
-        animation: pulse-green 1s infinite;
-    }
-    @keyframes pulse-green {
-        0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
-        70% { box-shadow: 0 0 0 15px rgba(40, 167, 69, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container">
+<div class="container my-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <h2 class="text-center mb-4">
-                <i class="bi bi-upc-scan"></i> Scan Product Barcode
-            </h2>
+            
+            <div class="text-center mb-4">
+                <h2>🔍 Scan Product Barcode</h2>
+                <p class="text-muted">Use your camera, upload an image, or enter barcode manually</p>
+            </div>
 
-            <!-- Scan Method Tabs -->
-            <ul class="nav nav-pills nav-justified mb-4" id="scanTabs" role="tablist">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs nav-fill mb-4" id="scanTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="camera-tab" data-bs-toggle="pill" 
-                            data-bs-target="#camera-scan" type="button">
-                        <i class="bi bi-camera-fill"></i> Camera
+                    <button class="nav-link active" id="camera-tab" data-bs-toggle="tab" 
+                            data-bs-target="#camera-panel" type="button" role="tab">
+                        📷 Camera
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="upload-tab" data-bs-toggle="pill" 
-                            data-bs-target="#upload-scan" type="button">
-                        <i class="bi bi-upload"></i> Upload Image
+                    <button class="nav-link" id="upload-tab" data-bs-toggle="tab" 
+                            data-bs-target="#upload-panel" type="button" role="tab">
+                        📤 Upload Image
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="manual-tab" data-bs-toggle="pill" 
-                            data-bs-target="#manual-scan" type="button">
-                        <i class="bi bi-keyboard"></i> Manual Entry
+                    <button class="nav-link" id="manual-tab" data-bs-toggle="tab" 
+                            data-bs-target="#manual-panel" type="button" role="tab">
+                        ⌨️ Manual Entry
                     </button>
                 </li>
             </ul>
 
+            <!-- Tab Content -->
             <div class="tab-content" id="scanTabContent">
                 
-                <!-- ========== CAMERA SCAN TAB ========== -->
-                <div class="tab-pane fade show active" id="camera-scan" role="tabpanel">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body text-center p-4">
+                <!-- CAMERA TAB -->
+                <div class="tab-pane fade show active" id="camera-panel" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center">
                             
-                            <!-- Scanner Container -->
-                            <div id="reader" class="mb-3"></div>
+                            <div id="reader" style="width: 100%; max-width: 600px; margin: 0 auto;"></div>
                             
-                            <!-- Status Messages -->
-                            <div id="camera-status" class="mb-3">
-                                <p class="text-muted">
-                                    <i class="bi bi-info-circle"></i> 
-                                    Click "Start Scanner" and point your camera at a barcode
-                                </p>
+                            <div id="camera-status" class="mt-3">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                <span class="ms-2">Initializing camera...</span>
                             </div>
 
-                            <!-- Scan Result Box (hidden initially) -->
-                            <div id="scanResultBox" style="display:none;" class="mb-3">
-                                <div class="alert alert-success scan-success-box">
-                                    <i class="bi bi-check-circle-fill"></i>
-                                    <strong>Barcode Detected!</strong>
-                                    <br>
-                                    <span id="scannedBarcodeText" class="fs-5 fw-bold"></span>
-                                    <br>
-                                    <small>Redirecting to product page...</small>
-                                </div>
-                            </div>
-                            
-                            <!-- Control Buttons -->
-                            <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                <button id="startScanBtn" class="btn btn-india btn-lg" onclick="startScanner()">
-                                    <i class="bi bi-camera-fill"></i> Start Scanner
-                                </button>
-                                <button id="stopScanBtn" class="btn btn-danger btn-lg" onclick="stopScanner()" 
-                                        style="display:none;">
-                                    <i class="bi bi-stop-fill"></i> Stop Scanner
-                                </button>
+                            <div id="scan-success" class="alert alert-success mt-3" style="display: none;">
+                                <strong>✅ Barcode Detected!</strong>
+                                <br>
+                                <span id="detected-barcode" class="fs-5 fw-bold"></span>
+                                <br>
+                                <span class="text-muted" id="detected-format"></span>
                             </div>
 
+                            <div id="scan-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                            
                             <div class="mt-3">
-                                <small class="text-muted">
-                                    <i class="bi bi-lightbulb"></i> 
-                                    <strong>Tips:</strong> Hold steady, ensure good lighting, 
-                                    keep barcode centered. Works best with rear camera on phones.
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ========== UPLOAD IMAGE TAB ========== -->
-                <div class="tab-pane fade" id="upload-scan" role="tabpanel">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <form id="uploadForm" enctype="multipart/form-data">
-                                <div class="upload-zone text-center p-5 border-2 border-dashed rounded mb-3"
-                                     id="dropZone">
-                                    <i class="bi bi-cloud-upload display-4 text-muted"></i>
-                                    <p class="mt-3 mb-1 fw-medium">Drag & drop a barcode image here</p>
-                                    <p class="text-muted small">or click to browse files</p>
-                                    <input type="file" id="imageInput" name="image" 
-                                           accept="image/*" class="d-none" capture="environment">
-                                    <button type="button" class="btn btn-outline-india mt-2" 
-                                            onclick="document.getElementById('imageInput').click()">
-                                        <i class="bi bi-image"></i> Choose Image
-                                    </button>
-                                    <p class="text-muted small mt-2 mb-0">
-                                        Supports: PNG, JPG, JPEG, GIF, BMP, WebP (Max 16MB)
-                                    </p>
-                                </div>
-                                
-                                <!-- Image Preview -->
-                                <div id="imagePreview" class="text-center mb-3" style="display:none;">
-                                    <img id="previewImg" class="img-fluid rounded shadow-sm" 
-                                         style="max-height: 300px;">
-                                    <br>
-                                    <button type="button" class="btn btn-sm btn-outline-danger mt-2" 
-                                            onclick="clearUpload()">
-                                        <i class="bi bi-x-circle"></i> Remove Image
-                                    </button>
-                                </div>
-
-                                <button type="submit" class="btn btn-india w-100 btn-lg" id="uploadBtn">
-                                    <i class="bi bi-search"></i> Scan Barcode from Image
+                                <button id="btn-start-camera" class="btn btn-success btn-lg me-2" onclick="startScanner()">
+                                    ▶️ Start Camera
                                 </button>
-                            </form>
+                                <button id="btn-stop-camera" class="btn btn-danger btn-lg" onclick="stopScanner()" style="display: none;">
+                                    ⏹️ Stop Camera
+                                </button>
+                            </div>
 
-                            <!-- Upload Result -->
-                            <div id="uploadResult" style="display:none;"></div>
-
-                            <div class="mt-3 text-center">
+                            <div class="mt-3 p-3 bg-light rounded">
                                 <small class="text-muted">
-                                    <i class="bi bi-phone"></i> On mobile? Use the camera option above for best results!
+                                    <strong>Tips for best scanning:</strong><br>
+                                    📏 Hold the barcode 6-10 inches from camera<br>
+                                    💡 Make sure there's good lighting<br>
+                                    🎯 Center the barcode inside the scanning box<br>
+                                    📱 Hold your phone steady<br>
+                                    🔄 Try both horizontal and vertical orientation
                                 </small>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ========== MANUAL ENTRY TAB ========== -->
-                <div class="tab-pane fade" id="manual-scan" role="tabpanel">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-body p-4">
-                            <form id="manualForm">
-                                <div class="mb-3">
-                                    <label for="manualBarcode" class="form-label fw-medium">
-                                        <i class="bi bi-upc"></i> Enter Barcode Number
-                                    </label>
-                                    <input type="text" id="manualBarcode" class="form-control form-control-lg" 
-                                           placeholder="e.g., 8901058851854"
-                                           maxlength="50" autofocus
-                                           inputmode="numeric">
-                                    <div class="form-text">
-                                        Enter the barcode number printed on the product packaging.
-                                        Usually 8 or 13 digits for Indian products starting with 890.
+                <!-- UPLOAD TAB -->
+                <div class="tab-pane fade" id="upload-panel" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="mb-4">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzY2NiI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIiByeD0iOCIvPjx0ZXh0IHg9IjMyIiB5PSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxMiI+8J+TpDwvdGV4dD48L3N2Zz4=" 
+                                     alt="Upload" style="width: 80px; opacity: 0.5;">
+                                <h5 class="mt-2">Upload Barcode Image</h5>
+                                <p class="text-muted">Select or take a photo of the barcode</p>
+                            </div>
+                            
+                            <input type="file" id="barcode-upload" class="form-control mb-3" 
+                                   accept="image/*" capture="environment" onchange="handleImageUpload(event)">
+                            
+                            <div id="upload-preview" class="mb-3" style="display: none;">
+                                <img id="preview-image" src="" alt="Preview" 
+                                     style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+                            </div>
+                            
+                            <div id="upload-result" class="mt-3" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MANUAL ENTRY TAB -->
+                <div class="tab-pane fade" id="manual-panel" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="text-center mb-3">Enter Barcode Number</h5>
+                            <p class="text-muted text-center">Type the number printed below the barcode</p>
+                            
+                            <div class="input-group input-group-lg mb-3">
+                                <input type="text" id="manual-barcode" class="form-control" 
+                                       placeholder="e.g., 8901058851854" 
+                                       maxlength="13" pattern="[0-9]*" inputmode="numeric"
+                                       onkeypress="if(event.key === 'Enter') lookupManualBarcode();">
+                                <button class="btn btn-primary" onclick="lookupManualBarcode()">
+                                    🔍 Search
+                                </button>
+                            </div>
+
+                            <div id="manual-result" class="mt-3" style="display: none;"></div>
+
+                            <!-- Sample barcodes for quick testing -->
+                            <div class="mt-4">
+                                <h6>🧪 Try These Sample Barcodes:</h6>
+                                <div class="row g-2 mt-2">
+                                    <div class="col-6 col-md-4">
+                                        <button class="btn btn-outline-secondary btn-sm w-100" 
+                                                onclick="fillBarcode('8901058851854')">
+                                            Parle-G Gold
+                                        </button>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <button class="btn btn-outline-secondary btn-sm w-100" 
+                                                onclick="fillBarcode('8901262150255')">
+                                            Maggi Noodles
+                                        </button>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <button class="btn btn-outline-secondary btn-sm w-100" 
+                                                onclick="fillBarcode('8901790753456')">
+                                            Crocin 500mg
+                                        </button>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <button class="btn btn-outline-secondary btn-sm w-100" 
+                                                onclick="fillBarcode('8901689152012')">
+                                            Himalaya Ashvagandha
+                                        </button>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <button class="btn btn-outline-secondary btn-sm w-100" 
+                                                onclick="fillBarcode('8901030697289')">
+                                            Lakme SPF 50
+                                        </button>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <button class="btn btn-outline-secondary btn-sm w-100" 
+                                                onclick="fillBarcode('8901030718960')">
+                                            Dove Shampoo
+                                        </button>
                                     </div>
                                 </div>
-                                
-                                <button type="submit" class="btn btn-india w-100 btn-lg" id="manualSearchBtn">
-                                    <i class="bi bi-search"></i> Search Product
-                                </button>
-                            </form>
-
-                            <!-- Manual Result -->
-                            <div id="manualResult" style="display:none;"></div>
-
-                            <!-- Quick Links -->
-                            <div class="mt-4">
-                                <h6 class="text-muted"><i class="bi bi-lightning-fill"></i> Quick Try:</h6>
-                                <div class="d-flex flex-wrap gap-2">
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901058851854">
-                                        🍪 Parle-G
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901262150255">
-                                        🍜 Maggi
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901030793424">
-                                        🥛 Amul Milk
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901790753456">
-                                        💊 Crocin
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901790789456">
-                                        💊 Azithral
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901689152012">
-                                        🌿 Himalaya Ashvagandha
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901689157891">
-                                        🌿 Dabur Chyawanprash
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8906009540115">
-                                        🧴 Mamaearth Face Wash
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8904245700577">
-                                        💇 Biotique Shampoo
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary quick-barcode" 
-                                            data-barcode="8901030718960">
-                                        💇 Dove Shampoo
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Supported Barcodes Info -->
-            <div class="card mt-4 border-0 shadow-sm">
-                <div class="card-body p-3">
-                    <h6 class="text-center mb-3">
-                        <i class="bi bi-check2-circle"></i> Supported Barcode Formats
-                    </h6>
-                    <div class="d-flex justify-content-center flex-wrap gap-2">
-                        <span class="badge bg-light text-dark border">EAN-13</span>
-                        <span class="badge bg-light text-dark border">EAN-8</span>
-                        <span class="badge bg-light text-dark border">UPC-A</span>
-                        <span class="badge bg-light text-dark border">UPC-E</span>
-                        <span class="badge bg-light text-dark border">Code 128</span>
-                        <span class="badge bg-light text-dark border">Code 39</span>
-                        <span class="badge bg-light text-dark border">QR Code</span>
-                    </div>
-                    <p class="text-center text-muted small mt-2 mb-0">
-                        🇮🇳 Indian products use EAN-13 barcodes starting with <strong>890</strong> (GS1 India)
-                    </p>
-                </div>
-            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- Html5-QRCode Library - Browser Based Scanner -->
+<!-- html5-qrcode library -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <script>
-// ==================== CAMERA SCANNER ====================
-var html5QrcodeScanner = null;
-var isScanning = false;
+    let html5QrCode = null;
+    let isScanning = false;
 
-function startScanner() {
-    var startBtn = document.getElementById('startScanBtn');
-    var stopBtn = document.getElementById('stopScanBtn');
-    var status = document.getElementById('camera-status');
+    // ============================================================
+    // CAMERA SCANNER — with ALL barcode formats enabled
+    // ============================================================
     
-    startBtn.style.display = 'none';
-    stopBtn.style.display = 'inline-block';
-    
-    status.innerHTML = '<p class="text-warning"><i class="bi bi-hourglass-split"></i> Starting camera...</p>';
-
-    html5QrcodeScanner = new Html5Qrcode("reader");
-    
-    var config = {
-        fps: 10,
-        qrbox: { width: 250, height: 150 },
-        aspectRatio: 1.777778,
-        formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.QR_CODE,
-        ]
-    };
-
-    html5QrcodeScanner.start(
-        { facingMode: "environment" },
-        config,
-        onScanSuccess,
-        onScanFailure
-    ).then(function() {
-        isScanning = true;
-        status.innerHTML = '<p class="text-success"><i class="bi bi-camera-fill"></i> Camera active! Point at a barcode.</p>';
-    }).catch(function(err) {
-        console.error("Camera error:", err);
-        startBtn.style.display = 'inline-block';
-        stopBtn.style.display = 'none';
+    function startScanner() {
+        const readerDiv = document.getElementById('reader');
+        const statusDiv = document.getElementById('camera-status');
+        const successDiv = document.getElementById('scan-success');
+        const errorDiv = document.getElementById('scan-error');
         
-        var errorMsg = 'Could not start camera. ';
-        if (err.toString().includes('NotAllowedError')) {
-            errorMsg += 'Please allow camera permission in your browser.';
-        } else if (err.toString().includes('NotFoundError')) {
-            errorMsg += 'No camera found on this device.';
-        } else {
-            errorMsg += 'Try using Manual Entry tab instead.';
-        }
+        // Reset UI
+        successDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
+        statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <span class="ms-2">Starting camera...</span>';
+        statusDiv.style.display = 'block';
         
-        status.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ' + errorMsg + '</div>';
-    });
-}
+        document.getElementById('btn-start-camera').style.display = 'none';
+        document.getElementById('btn-stop-camera').style.display = 'inline-block';
 
-function stopScanner() {
-    if (html5QrcodeScanner && isScanning) {
-        html5QrcodeScanner.stop().then(function() {
-            html5QrcodeScanner.clear();
-            isScanning = false;
-            
-            document.getElementById('startScanBtn').style.display = 'inline-block';
-            document.getElementById('stopScanBtn').style.display = 'none';
-            document.getElementById('camera-status').innerHTML = 
-                '<p class="text-muted"><i class="bi bi-info-circle"></i> Scanner stopped. Click "Start Scanner" to scan again.</p>';
-        }).catch(function(err) {
-            console.error("Stop error:", err);
-        });
-    }
-}
+        // Create new scanner instance
+        html5QrCode = new Html5Qrcode("reader");
 
-function onScanSuccess(decodedText, decodedResult) {
-    // Stop scanning immediately
-    if (html5QrcodeScanner && isScanning) {
-        html5QrcodeScanner.stop().then(function() {
-            isScanning = false;
-        }).catch(function(err) {
-            console.error(err);
-        });
-    }
-    
-    // Play beep sound
-    playBeep();
-    
-    // Show success message
-    var resultBox = document.getElementById('scanResultBox');
-    var barcodeText = document.getElementById('scannedBarcodeText');
-    var status = document.getElementById('camera-status');
-    
-    barcodeText.textContent = decodedText;
-    resultBox.style.display = 'block';
-    status.innerHTML = '';
-    
-    document.getElementById('startScanBtn').style.display = 'none';
-    document.getElementById('stopScanBtn').style.display = 'none';
-    
-    // Check if Indian barcode
-    var isIndian = decodedText.length >= 3 && decodedText.substring(0, 3) === '890';
-    if (isIndian) {
-        barcodeText.textContent = '🇮🇳 ' + decodedText + ' (Indian Product)';
-    }
-    
-    // Redirect to product page after 1.5 seconds
-    setTimeout(function() {
-        window.location.href = '/result/' + decodedText;
-    }, 1500);
-}
-
-function onScanFailure(error) {
-    // Ignore scan failures (happens continuously when no barcode is in view)
-}
-
-function playBeep() {
-    try {
-        var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        var oscillator = audioCtx.createOscillator();
-        var gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.frequency.value = 1200;
-        oscillator.type = 'sine';
-        gainNode.gain.value = 0.3;
-        oscillator.start();
-        setTimeout(function() {
-            oscillator.stop();
-            audioCtx.close();
-        }, 200);
-    } catch (e) {}
-}
-
-// ==================== IMAGE UPLOAD ====================
-var uploadForm = document.getElementById('uploadForm');
-var imageInput = document.getElementById('imageInput');
-
-if (imageInput) {
-    imageInput.addEventListener('change', function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
-        
-        var preview = document.getElementById('imagePreview');
-        var previewImg = document.getElementById('previewImg');
-        var dropZone = document.getElementById('dropZone');
-        
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-            previewImg.src = ev.target.result;
-            preview.style.display = 'block';
-            dropZone.style.display = 'none';
+        // ALL barcode formats including EAN_13 for Indian products
+        const config = {
+            fps: 15,
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                let minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                let boxWidth = Math.floor(minEdge * 0.85);
+                let boxHeight = Math.floor(boxWidth * 0.45);
+                return { width: boxWidth, height: boxHeight };
+            },
+            aspectRatio: 1.0,
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93,
+                Html5QrcodeSupportedFormats.CODABAR,
+                Html5QrcodeSupportedFormats.ITF,
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.DATA_MATRIX
+            ],
+            disableFlip: false,
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+            }
         };
-        reader.readAsDataURL(file);
-    });
-}
 
-if (uploadForm) {
-    uploadForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+        // Prefer back camera
+        html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            onScanSuccess,
+            onScanFailure
+        ).then(function() {
+            isScanning = true;
+            statusDiv.innerHTML = '🟢 <span class="text-success">Camera active — point at a barcode</span>';
+            console.log("Scanner started successfully");
+        }).catch(function(err) {
+            console.error("Camera start error:", err);
+            statusDiv.style.display = 'none';
+            
+            // Try front camera as fallback
+            console.log("Trying front camera...");
+            html5QrCode.start(
+                { facingMode: "user" },
+                config,
+                onScanSuccess,
+                onScanFailure
+            ).then(function() {
+                isScanning = true;
+                statusDiv.innerHTML = '🟢 <span class="text-success">Front camera active — point at a barcode</span>';
+                statusDiv.style.display = 'block';
+            }).catch(function(err2) {
+                console.error("Front camera also failed:", err2);
+                errorDiv.innerHTML = '<strong>❌ Camera Error</strong><br>' + 
+                    'Could not access camera. Please try:<br>' +
+                    '• Allow camera permission when prompted<br>' +
+                    '• Use HTTPS (camera requires secure context)<br>' +
+                    '• Try the Upload or Manual Entry tabs instead<br>' +
+                    '<small class="text-muted">Error: ' + err2 + '</small>';
+                errorDiv.style.display = 'block';
+                statusDiv.style.display = 'none';
+                document.getElementById('btn-start-camera').style.display = 'inline-block';
+                document.getElementById('btn-stop-camera').style.display = 'none';
+            });
+        });
+    }
+
+    // ============================================================
+    // SUCCESS CALLBACK — barcode was read!
+    // ============================================================
+    function onScanSuccess(decodedText, decodedResult) {
+        console.log("=== BARCODE DETECTED ===");
+        console.log("Value:", decodedText);
+        console.log("Format:", decodedResult.result.format.formatName);
         
-        var fileInput = document.getElementById('imageInput');
-        if (!fileInput || !fileInput.files[0]) {
-            alert('Please select an image first.');
-            return;
+        // Stop scanning immediately to prevent multiple reads
+        stopScanner();
+
+        // Show detected barcode on screen
+        var successDiv = document.getElementById('scan-success');
+        document.getElementById('detected-barcode').textContent = decodedText;
+        document.getElementById('detected-format').textContent = 
+            'Format: ' + decodedResult.result.format.formatName;
+        successDiv.style.display = 'block';
+        
+        // Play a subtle beep
+        try {
+            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var oscillator = audioCtx.createOscillator();
+            var gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 800;
+            gainNode.gain.value = 0.1;
+            oscillator.start();
+            setTimeout(function() { oscillator.stop(); }, 150);
+        } catch(e) { /* ignore audio errors */ }
+
+        // Redirect to result page
+        setTimeout(function() {
+            window.location.href = '/result/' + encodeURIComponent(decodedText);
+        }, 800);
+    }
+
+    // ============================================================
+    // FAILURE CALLBACK — called continuously when no barcode found
+    // ============================================================
+    function onScanFailure(error) {
+        // This fires every frame when no barcode is detected — this is normal
+    }
+
+    // ============================================================
+    // STOP SCANNER
+    // ============================================================
+    function stopScanner() {
+        if (html5QrCode && isScanning) {
+            html5QrCode.stop().then(function() {
+                isScanning = false;
+                console.log("Scanner stopped");
+                document.getElementById('camera-status').innerHTML = '⏸️ Camera stopped';
+                document.getElementById('btn-start-camera').style.display = 'inline-block';
+                document.getElementById('btn-stop-camera').style.display = 'none';
+            }).catch(function(err) {
+                console.error("Error stopping scanner:", err);
+                isScanning = false;
+            });
         }
+    }
+
+    // ============================================================
+    // IMAGE UPLOAD SCANNING
+    // ============================================================
+    function handleImageUpload(event) {
+        var file = event.target.files[0];
+        if (!file) return;
+
+        // Show preview
+        var previewDiv = document.getElementById('upload-preview');
+        var previewImg = document.getElementById('preview-image');
+        var resultDiv = document.getElementById('upload-result');
         
-        var file = fileInput.files[0];
-        var uploadBtn = document.getElementById('uploadBtn');
-        var resultDiv = document.getElementById('uploadResult');
-        
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Scanning...';
-        
-        // Use html5-qrcode to scan from file
-        var html5Qrcode = new Html5Qrcode("uploadScanTemp");
-        
-        // Create a temporary hidden div
-        var tempDiv = document.getElementById('uploadScanTemp');
+        previewImg.src = URL.createObjectURL(file);
+        previewDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Scanning image...';
+        resultDiv.className = 'mt-3 alert alert-info';
+        resultDiv.style.display = 'block';
+
+        // Create a temporary hidden div for the scanner if it doesn't exist
+        var tempDiv = document.getElementById('upload-temp-reader');
         if (!tempDiv) {
             tempDiv = document.createElement('div');
-            tempDiv.id = 'uploadScanTemp';
+            tempDiv.id = 'upload-temp-reader';
             tempDiv.style.display = 'none';
             document.body.appendChild(tempDiv);
         }
-        
-        html5Qrcode.scanFile(file, true)
+
+        // Scan the uploaded image
+        var html5QrCodeForUpload = new Html5Qrcode("upload-temp-reader");
+
+        html5QrCodeForUpload.scanFile(file, false)
             .then(function(decodedText) {
-                playBeep();
-                resultDiv.innerHTML = '<div class="alert alert-success mt-3"><i class="bi bi-check-circle-fill"></i> Barcode found: <strong>' + decodedText + '</strong>. Redirecting...</div>';
-                resultDiv.style.display = 'block';
+                console.log("Upload scan result:", decodedText);
+                resultDiv.innerHTML = '✅ <strong>Barcode Found:</strong> ' + decodedText + 
+                    '<br><a href="/result/' + encodeURIComponent(decodedText) + 
+                    '" class="btn btn-primary btn-sm mt-2">View Product Details →</a>';
+                resultDiv.className = 'mt-3 alert alert-success';
                 
+                // Auto-redirect after 1.5 seconds
                 setTimeout(function() {
-                    window.location.href = '/result/' + decodedText;
-                }, 1000);
+                    window.location.href = '/result/' + encodeURIComponent(decodedText);
+                }, 1500);
             })
             .catch(function(err) {
-                resultDiv.innerHTML = '<div class="alert alert-warning mt-3"><i class="bi bi-exclamation-triangle"></i> No barcode detected in image. Try a clearer photo or use Manual Entry.</div>';
-                resultDiv.style.display = 'block';
-                
-                uploadBtn.disabled = false;
-                uploadBtn.innerHTML = '<i class="bi bi-search"></i> Scan Barcode from Image';
+                console.error("Upload scan error:", err);
+                resultDiv.innerHTML = '❌ <strong>Could not read barcode from image.</strong><br>' +
+                    'Tips: Make sure the barcode is clear, well-lit, and not blurry.<br>' +
+                    'Try the Manual Entry tab instead.';
+                resultDiv.className = 'mt-3 alert alert-warning';
             });
-    });
-}
-
-function clearUpload() {
-    var imageInput = document.getElementById('imageInput');
-    var preview = document.getElementById('imagePreview');
-    var dropZone = document.getElementById('dropZone');
-    var resultDiv = document.getElementById('uploadResult');
-    
-    if (imageInput) imageInput.value = '';
-    if (preview) preview.style.display = 'none';
-    if (dropZone) dropZone.style.display = 'block';
-    if (resultDiv) resultDiv.style.display = 'none';
-}
-
-// Drag and drop
-var dropZone = document.getElementById('dropZone');
-if (dropZone) {
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
-        dropZone.addEventListener(eventName, function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }, false);
-    });
-    
-    ['dragenter', 'dragover'].forEach(function(eventName) {
-        dropZone.addEventListener(eventName, function() {
-            dropZone.classList.add('dragover');
-        }, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(function(eventName) {
-        dropZone.addEventListener(eventName, function() {
-            dropZone.classList.remove('dragover');
-        }, false);
-    });
-    
-    dropZone.addEventListener('drop', function(e) {
-        var files = e.dataTransfer.files;
-        if (files.length > 0) {
-            var imageInput = document.getElementById('imageInput');
-            var dt = new DataTransfer();
-            dt.items.add(files[0]);
-            imageInput.files = dt.files;
-            imageInput.dispatchEvent(new Event('change'));
-        }
-    }, false);
-}
-
-// ==================== MANUAL ENTRY ====================
-var manualForm = document.getElementById('manualForm');
-if (manualForm) {
-    manualForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        var barcode = document.getElementById('manualBarcode').value.trim();
-        if (barcode) {
-            window.location.href = '/result/' + barcode;
-        } else {
-            alert('Please enter a barcode number.');
-        }
-    });
-}
-
-// Quick barcode buttons
-document.querySelectorAll('.quick-barcode').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        var barcode = this.getAttribute('data-barcode');
-        window.location.href = '/result/' + barcode;
-    });
-});
-
-// Cleanup on page leave
-window.addEventListener('beforeunload', function() {
-    if (html5QrcodeScanner && isScanning) {
-        html5QrcodeScanner.stop();
     }
-});
+
+    // ============================================================
+    // MANUAL BARCODE ENTRY
+    // ============================================================
+    function fillBarcode(code) {
+        document.getElementById('manual-barcode').value = code;
+        lookupManualBarcode();
+    }
+
+    function lookupManualBarcode() {
+        var barcode = document.getElementById('manual-barcode').value.trim();
+        var resultDiv = document.getElementById('manual-result');
+        
+        if (!barcode) {
+            resultDiv.innerHTML = '⚠️ Please enter a barcode number';
+            resultDiv.className = 'mt-3 alert alert-warning';
+            resultDiv.style.display = 'block';
+            return;
+        }
+
+        if (!/^\d+$/.test(barcode)) {
+            resultDiv.innerHTML = '⚠️ Barcode should contain only numbers';
+            resultDiv.className = 'mt-3 alert alert-warning';
+            resultDiv.style.display = 'block';
+            return;
+        }
+
+        resultDiv.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Looking up product...';
+        resultDiv.className = 'mt-3 alert alert-info';
+        resultDiv.style.display = 'block';
+
+        // Redirect to result page
+        window.location.href = '/result/' + encodeURIComponent(barcode);
+    }
+
+    // ============================================================
+    // AUTO-START camera when page loads
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        var statusDiv = document.getElementById('camera-status');
+        
+        // Check if camera is available
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            statusDiv.innerHTML = '📷 Camera available. Click <strong>Start Camera</strong> to begin scanning.';
+            // Auto-start the scanner
+            setTimeout(function() {
+                startScanner();
+            }, 500);
+        } else {
+            statusDiv.innerHTML = '⚠️ Camera not available. Use Upload or Manual Entry instead.';
+            statusDiv.className = 'mt-3 alert alert-warning';
+        }
+    });
+
+    // Stop scanner when user leaves the page
+    window.addEventListener('beforeunload', function() {
+        stopScanner();
+    });
+
+    // Stop scanner when switching tabs
+    document.querySelectorAll('#scanTabs button').forEach(function(tab) {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            if (e.target.id !== 'camera-tab') {
+                stopScanner();
+            }
+        });
+    });
 </script>
 {% endblock %}
