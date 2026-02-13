@@ -1,0 +1,771 @@
+/* ============================================
+   🇮🇳 BharatScan - Indian Product Scanner CSS
+   ============================================ */
+
+/* === Root Variables === */
+:root {
+    --india-saffron: #FF9933;
+    --india-white: #FFFFFF;
+    --india-green: #138808;
+    --india-blue: #000080;
+    --india-chakra: #000080;
+    
+    --color-food: #28a745;
+    --color-medicine: #0d6efd;
+    --color-nutra: #17a2b8;
+    --color-skincare: #ffc107;
+    --color-haircare: #6c757d;
+    
+    --gradient-india: linear-gradient(135deg, #FF9933 0%, #FFFFFF 50%, #138808 100%);
+    --gradient-saffron: linear-gradient(135deg, #FF9933, #FF6600);
+    --gradient-green: linear-gradient(135deg, #138808, #0d6d07);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+/* === Global Styles === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* === Navbar === */
+.bg-gradient-india {
+    background: linear-gradient(135deg, #FF9933 0%, #e8820a 50%, #138808 100%) !important;
+}
+
+.navbar {
+    padding: 0.8rem 0;
+    box-shadow: var(--shadow-md);
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+}
+
+.navbar-brand .flag-icon {
+    font-size: 1.5rem;
+    margin-right: 4px;
+}
+
+.nav-link {
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    border-radius: var(--radius-sm);
+    transition: all 0.3s ease;
+    margin: 0 2px;
+}
+
+.nav-link:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.nav-link i {
+    margin-right: 4px;
+}
+
+/* === Button Styles === */
+.btn-india {
+    background: var(--gradient-saffron);
+    border: none;
+    color: white;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 153, 51, 0.3);
+}
+
+.btn-india:hover {
+    background: linear-gradient(135deg, #e8820a, #cc5500);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 153, 51, 0.4);
+}
+
+.btn-india:active {
+    transform: translateY(0);
+}
+
+.btn-outline-india {
+    border: 2px solid var(--india-saffron);
+    color: var(--india-saffron);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-india:hover {
+    background: var(--india-saffron);
+    color: white;
+}
+
+.btn-green-india {
+    background: var(--gradient-green);
+    border: none;
+    color: white;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+}
+
+.btn-green-india:hover {
+    background: linear-gradient(135deg, #0d6d07, #095a05);
+    color: white;
+}
+
+/* === Hero Section === */
+.hero-section {
+    padding: 2rem 0;
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #FF9933, #138808);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* === Card Styles === */
+.card {
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.feature-card {
+    cursor: default;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+}
+
+/* === Stat Cards === */
+.stat-card {
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-card .stat-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card h3 {
+    font-weight: 700;
+    font-size: 1.8rem;
+}
+
+.stat-card small {
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.bg-food {
+    background: var(--gradient-green);
+}
+
+.bg-medicine {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+}
+
+.bg-nutra {
+    background: linear-gradient(135deg, #17a2b8, #0f7b8a);
+}
+
+.bg-skincare {
+    background: linear-gradient(135deg, #ffc107, #d4a106);
+    color: #333 !important;
+}
+
+.bg-haircare {
+    background: linear-gradient(135deg, #6c757d, #545b62);
+}
+
+/* === Scan Page === */
+.nav-pills .nav-link {
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    color: #555;
+    padding: 0.7rem 1rem;
+}
+
+.nav-pills .nav-link.active {
+    background: var(--gradient-saffron);
+    color: white;
+}
+
+.nav-pills .nav-link:not(.active):hover {
+    background: #f0f0f0;
+}
+
+/* Camera Scanner */
+#camera-container {
+    position: relative;
+    background: #000;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#camera-feed {
+    width: 100%;
+    max-height: 450px;
+    object-fit: cover;
+}
+
+.scan-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.scan-guide {
+    width: 280px;
+    height: 160px;
+    border: 3px solid var(--india-saffron);
+    border-radius: 12px;
+    position: relative;
+    animation: scan-pulse 2s infinite;
+}
+
+.scan-guide::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    right: 5%;
+    height: 2px;
+    background: #FF9933;
+    animation: scan-line 2s infinite ease-in-out;
+}
+
+@keyframes scan-pulse {
+    0%, 100% { border-color: rgba(255, 153, 51, 0.8); }
+    50% { border-color: rgba(19, 136, 8, 0.8); }
+}
+
+@keyframes scan-line {
+    0% { top: 20%; }
+    50% { top: 80%; }
+    100% { top: 20%; }
+}
+
+/* Upload Zone */
+.upload-zone {
+    border: 3px dashed #ccc;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fefefe;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+    border-color: var(--india-saffron);
+    background: #fff8f0;
+}
+
+.upload-zone.dragover {
+    transform: scale(1.02);
+}
+
+/* === Result Page === */
+.product-header {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.veg-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.veg-mark.green-dot {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+}
+
+.veg-mark.green-dot::before {
+    content: '●';
+    color: #2e7d32;
+    font-size: 1.2rem;
+}
+
+.veg-mark.brown-dot {
+    background: #fff3e0;
+    color: #e65100;
+    border: 2px solid #e65100;
+}
+
+.veg-mark.brown-dot::before {
+    content: '●';
+    color: #e65100;
+    font-size: 1.2rem;
+}
+
+.veg-mark.red-dot {
+    background: #ffebee;
+    color: #c62828;
+    border: 2px solid #c62828;
+}
+
+.veg-mark.red-dot::before {
+    content: '●';
+    color: #c62828;
+    font-size: 1.2rem;
+}
+
+/* Category Badges */
+.category-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.category-badge.food { background: #e8f5e9; color: #2e7d32; }
+.category-badge.medicine { background: #e3f2fd; color: #1565c0; }
+.category-badge.nutraceutical { background: #e0f7fa; color: #00838f; }
+.category-badge.skincare { background: #fff8e1; color: #f57f17; }
+.category-badge.haircare { background: #eceff1; color: #455a64; }
+
+/* Nutritional Info Table */
+.nutrition-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.nutrition-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    padding: 10px 16px;
+}
+
+.nutrition-table td {
+    padding: 8px 16px;
+}
+
+.nutrition-table tr:nth-child(even) {
+    background: #fafafa;
+}
+
+/* Warning Cards */
+.warning-card {
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-left: 4px solid;
+}
+
+.warning-card.critical {
+    background: #fff5f5;
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.warning-card.high {
+    background: #fff8f0;
+    border-left-color: #fd7e14;
+    color: #856404;
+}
+
+.warning-card.medium {
+    background: #fffde7;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.warning-card.low {
+    background: #f0f9ff;
+    border-left-color: #17a2b8;
+    color: #0c5460;
+}
+
+/* Info Sections */
+.info-section {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.info-section h5 {
+    color: var(--india-saffron);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.info-section .info-row {
+    display: flex;
+    padding: 6px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.info-section .info-row:last-child {
+    border-bottom: none;
+}
+
+.info-section .info-label {
+    font-weight: 600;
+    color: #555;
+    min-width: 160px;
+    font-size: 0.9rem;
+}
+
+.info-section .info-value {
+    color: #333;
+    font-size: 0.9rem;
+}
+
+/* FSSAI Badge */
+.fssai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #c8e6c9;
+}
+
+/* Drug Schedule Badge */
+.schedule-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.schedule-badge.otc {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.schedule-badge.h {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.schedule-badge.h1 {
+    background: #fce4ec;
+    color: #c62828;
+}
+
+.schedule-badge.x {
+    background: #f3e5f5;
+    color: #6a1b9a;
+}
+
+/* Generic Alternatives Card */
+.alternative-card {
+    background: #f0faf0;
+    border: 1px solid #c8e6c9;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.jan-aushadhi-badge {
+    background: linear-gradient(135deg, #1565c0, #0d47a1);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.savings-badge {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+/* MRP Display */
+.mrp-display {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.mrp-display::before {
+    content: '₹';
+    font-size: 1.2rem;
+}
+
+/* === History Page === */
+.history-item {
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.history-item:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateX(4px);
+}
+
+.history-item .scan-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.history-item .scan-icon.found {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.history-item .scan-icon.not-found {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* === Loading Spinner === */
+.spinner-india {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--india-saffron);
+    border-right: 4px solid var(--india-white);
+    border-bottom: 4px solid var(--india-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* === Not Found State === */
+.not-found-section {
+    text-align: center;
+    padding: 3rem;
+}
+
+.not-found-section .not-found-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+/* === Footer === */
+.footer {
+    margin-top: auto;
+}
+
+.footer a {
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer a:hover {
+    color: var(--india-saffron) !important;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .stat-card h3 {
+        font-size: 1.3rem;
+    }
+    
+    .info-section .info-row {
+        flex-direction: column;
+    }
+    
+    .info-section .info-label {
+        min-width: auto;
+        margin-bottom: 2px;
+    }
+    
+    .scan-guide {
+        width: 220px;
+        height: 130px;
+    }
+    
+    .nav-pills .nav-link {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.7rem;
+    }
+    
+    .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section h1 {
+        font-size: 1.6rem;
+    }
+    
+    .container-fluid {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .btn-lg {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* === Utility Classes === */
+.border-dashed {
+    border-style: dashed !important;
+}
+
+.text-saffron {
+    color: var(--india-saffron) !important;
+}
+
+.text-india-green {
+    color: var(--india-green) !important;
+}
+
+.bg-saffron-light {
+    background: #fff8f0 !important;
+}
+
+.bg-green-light {
+    background: #f0faf0 !important;
+}
+
+.rounded-lg {
+    border-radius: var(--radius-lg) !important;
+}
+
+/* Smooth page transitions */
+.tab-pane {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--india-saffron);
+}
+
+/* Print styles */
+@media print {
+    .navbar, .footer, .btn, .nav-pills {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+}

@@ -1,0 +1,750 @@
+{% extends "base.html" %}
+{% block title %}
+    {% if result.found %}{{ result.product.name }} - BharatScan{% else %}Product Not Found - BharatScan{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a href="/scan" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to Scanner
+        </a>
+        <a href="/" class="btn btn-outline-secondary btn-sm ms-1">
+            <i class="bi bi-house"></i> Home
+        </a>
+    </div>
+
+    {% if result.found %}
+        {% set product = result.product %}
+        
+        <!-- ==================== PRODUCT HEADER ==================== -->
+        <div class="card product-header shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <!-- Category & Badges -->
+                        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                            <span class="category-badge {{ product.category }}">
+                                {% if product.category == 'food' %}🍽️
+                                {% elif product.category == 'medicine' %}💊
+                                {% elif product.category == 'nutraceutical' %}🌿
+                                {% elif product.category == 'skincare' %}🧴
+                                {% elif product.category == 'haircare' %}💇
+                                {% else %}📦
+                                {% endif %}
+                                {{ product.category | title }}
+                            </span>
+                            
+                            {% if product.veg_nonveg_mark %}
+                                <span class="veg-mark {{ product.veg_nonveg_mark }}">
+                                    {% if product.veg_nonveg_mark == 'green_dot' %}Vegetarian
+                                    {% elif product.veg_nonveg_mark == 'brown_dot' %}Non-Vegetarian
+                                    {% elif product.veg_nonveg_mark == 'red_dot' %}Non-Vegetarian
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+                            
+                            {% if product.is_indian_product %}
+                                <span class="badge bg-warning text-dark">🇮🇳 Indian Product</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Product Name & Brand -->
+                        <h2 class="fw-bold mb-1">{{ product.name }}</h2>
+                        {% if product.brand %}
+                            <h5 class="text-muted mb-2">{{ product.brand }}</h5>
+                        {% endif %}
+                        {% if product.description %}
+                            <p class="text-muted mb-2">{{ product.description }}</p>
+                        {% endif %}
+                        
+                        <!-- Meta Badges -->
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            <span class="badge bg-light text-dark border">
+                                <i class="bi bi-upc"></i> {{ barcode }}
+                            </span>
+                            <span class="badge bg-light text-dark border">
+                                📡 Source: {{ result.source }}
+                            </span>
+                            {% if product.mrp %}
+                                <span class="badge bg-success fs-6">
+                                    MRP: ₹{{ "%.2f"|format(product.mrp) }}
+                                </span>
+                            {% endif %}
+                            {% if product.net_weight %}
+                                <span class="badge bg-light text-dark border">
+                                    ⚖️ {{ product.net_weight }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Product Image -->
+                    <div class="col-md-4 text-center mt-3 mt-md-0">
+                        {% if product.image_url %}
+                            <img src="{{ product.image_url }}" alt="{{ product.name }}" 
+                                 class="img-fluid rounded shadow-sm" style="max-height: 200px;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div style="display:none; font-size: 5rem;">📦</div>
+                        {% else %}
+                            <div class="p-4">
+                                <span style="font-size: 5rem;">
+                                    {% if product.category == 'food' %}🍽️
+                                    {% elif product.category == 'medicine' %}💊
+                                    {% elif product.category == 'nutraceutical' %}🌿
+                                    {% elif product.category == 'skincare' %}🧴
+                                    {% elif product.category == 'haircare' %}💇
+                                    {% else %}📦
+                                    {% endif %}
+                                </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== WARNINGS SECTION ==================== -->
+        {% if result.warnings and result.warnings|length > 0 %}
+            <div class="mb-4">
+                <h5 class="text-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Warnings & Alerts
+                </h5>
+                {% for warning in result.warnings %}
+                    <div class="warning-card {{ warning.severity }}">
+                        <strong>{{ warning.message }}</strong>
+                        {% if warning.reason %}
+                            <br><small class="text-muted">Reason: {{ warning.reason }}</small>
+                        {% endif %}
+                        {% if warning.regulation %}
+                            <br><small class="text-muted">Reference: {{ warning.regulation }}</small>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if product.warnings and product.warnings|length > 0 %}
+            <div class="mb-4">
+                {% for warning in product.warnings %}
+                    <div class="warning-card {{ warning.severity }}">
+                        <strong>{{ warning.message }}</strong>
+                        {% if warning.source %}
+                            <br><small class="text-muted">Source: {{ warning.source }}</small>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- ==================== MAIN CONTENT COLUMNS ==================== -->
+        <div class="row g-4">
+            
+            <!-- ===== LEFT COLUMN ===== -->
+            <div class="col-lg-6">
+                
+                <!-- Basic Product Info -->
+                <div class="info-section">
+                    <h5><i class="bi bi-info-circle"></i> Product Information</h5>
+                    
+                    {% if product.manufacturer %}
+                    <div class="info-row">
+                        <span class="info-label">Manufacturer</span>
+                        <span class="info-value">{{ product.manufacturer }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.manufacturer_address %}
+                    <div class="info-row">
+                        <span class="info-label">Address</span>
+                        <span class="info-value">{{ product.manufacturer_address }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.country_of_origin %}
+                    <div class="info-row">
+                        <span class="info-label">Country of Origin</span>
+                        <span class="info-value">
+                            {% if product.country_of_origin == 'India' %}🇮🇳 {% endif %}
+                            {{ product.country_of_origin }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.net_weight %}
+                    <div class="info-row">
+                        <span class="info-label">Net Weight/Volume</span>
+                        <span class="info-value">{{ product.net_weight }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.mrp %}
+                    <div class="info-row">
+                        <span class="info-label">MRP</span>
+                        <span class="info-value">
+                            <span class="mrp-display">{{ "%.2f"|format(product.mrp) }}</span>
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.shelf_life %}
+                    <div class="info-row">
+                        <span class="info-label">Shelf Life</span>
+                        <span class="info-value">{{ product.shelf_life }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.storage_instructions %}
+                    <div class="info-row">
+                        <span class="info-label">Storage</span>
+                        <span class="info-value">{{ product.storage_instructions }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.usage_instructions %}
+                    <div class="info-row">
+                        <span class="info-label">Usage</span>
+                        <span class="info-value">{{ product.usage_instructions }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Regulatory Information -->
+                <div class="info-section">
+                    <h5><i class="bi bi-shield-check"></i> Regulatory Information</h5>
+                    
+                    {% if product.fssai_license %}
+                    <div class="info-row">
+                        <span class="info-label">FSSAI License</span>
+                        <span class="info-value">
+                            <span class="fssai-badge">
+                                <i class="bi bi-patch-check-fill"></i>
+                                {{ product.fssai_license }}
+                            </span>
+                            <button class="btn btn-sm btn-outline-success ms-2" 
+                                    onclick="verifyFSSAILicense('{{ product.fssai_license }}')">
+                                Verify
+                            </button>
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.drug_license_number %}
+                    <div class="info-row">
+                        <span class="info-label">Drug License</span>
+                        <span class="info-value">{{ product.drug_license_number }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.fssai_category %}
+                    <div class="info-row">
+                        <span class="info-label">FSSAI Category</span>
+                        <span class="info-value">{{ product.fssai_category }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not product.fssai_license and not product.drug_license_number %}
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle"></i> No regulatory information available for this product.
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Ingredients -->
+                {% if product.ingredients_list %}
+                <div class="info-section">
+                    <h5><i class="bi bi-list-check"></i> Ingredients</h5>
+                    <p class="mb-0" style="font-size: 0.9rem; line-height: 1.8;">
+                        {{ product.ingredients_list }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <!-- Allergen Info -->
+                {% if product.allergens %}
+                <div class="info-section" style="border-left: 4px solid #ffc107;">
+                    <h5 class="text-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Allergen Information
+                    </h5>
+                    <p class="mb-0 fw-medium">{{ product.allergens }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Dietary Information -->
+                {% if product.dietary_info %}
+                <div class="info-section">
+                    <h5><i class="bi bi-heart-pulse"></i> Dietary Information</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if product.dietary_info.is_vegetarian %}
+                            <span class="badge bg-success p-2">
+                                <i class="bi bi-check-circle"></i> Vegetarian
+                            </span>
+                        {% endif %}
+                        {% if product.dietary_info.is_vegan %}
+                            <span class="badge bg-success p-2">
+                                <i class="bi bi-check-circle"></i> Vegan
+                            </span>
+                        {% endif %}
+                        {% if product.dietary_info.is_organic %}
+                            <span class="badge bg-success p-2">
+                                <i class="bi bi-check-circle"></i> Organic
+                            </span>
+                        {% endif %}
+                        {% if product.dietary_info.is_gluten_free %}
+                            <span class="badge bg-info p-2">
+                                <i class="bi bi-check-circle"></i> Gluten-Free
+                            </span>
+                        {% endif %}
+                        {% if product.dietary_info.contains_nuts %}
+                            <span class="badge bg-warning text-dark p-2">
+                                <i class="bi bi-exclamation-triangle"></i> Contains Nuts
+                            </span>
+                        {% endif %}
+                        {% if product.dietary_info.contains_dairy %}
+                            <span class="badge bg-warning text-dark p-2">
+                                <i class="bi bi-exclamation-triangle"></i> Contains Dairy
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Cosmetic/Skincare Info -->
+                {% if product.cosmetic_info %}
+                <div class="info-section">
+                    <h5><i class="bi bi-droplet"></i> 
+                        {% if product.category == 'skincare' %}Skincare{% else %}Haircare{% endif %} Details
+                    </h5>
+                    
+                    {% if product.cosmetic_info.skin_type %}
+                    <div class="info-row">
+                        <span class="info-label">Suitable For</span>
+                        <span class="info-value">{{ product.cosmetic_info.skin_type }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.cosmetic_info.spf_value %}
+                    <div class="info-row">
+                        <span class="info-label">SPF Value</span>
+                        <span class="info-value">
+                            <span class="badge bg-warning text-dark">SPF {{ product.cosmetic_info.spf_value }}</span>
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        {% if product.cosmetic_info.paraben_free %}
+                            <span class="badge bg-success p-2">✅ Paraben-Free</span>
+                        {% endif %}
+                        {% if product.cosmetic_info.sulphate_free %}
+                            <span class="badge bg-success p-2">✅ Sulphate-Free</span>
+                        {% endif %}
+                        {% if product.cosmetic_info.cruelty_free %}
+                            <span class="badge bg-success p-2">🐰 Cruelty-Free</span>
+                        {% endif %}
+                        
+                        {% if product.cosmetic_info.paraben_free == false %}
+                            <span class="badge bg-secondary p-2">Contains Parabens</span>
+                        {% endif %}
+                        {% if product.cosmetic_info.sulphate_free == false %}
+                            <span class="badge bg-secondary p-2">Contains Sulphates</span>
+                        {% endif %}
+                        {% if product.cosmetic_info.cruelty_free == false %}
+                            <span class="badge bg-secondary p-2">Not Cruelty-Free</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ===== RIGHT COLUMN ===== -->
+            <div class="col-lg-6">
+                
+                <!-- Nutritional Information -->
+                {% if product.nutritional_info %}
+                <div class="info-section">
+                    <h5><i class="bi bi-bar-chart-line"></i> Nutritional Information</h5>
+                    
+                    {% if product.nutritional_info.serving_size %}
+                        <p class="text-muted small mb-2">
+                            <strong>Serving Size:</strong> {{ product.nutritional_info.serving_size }}
+                        </p>
+                    {% endif %}
+                    
+                    <table class="table table-sm nutrition-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nutrient</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if product.nutritional_info.energy_kcal is not none %}
+                            <tr>
+                                <td><strong>Energy</strong></td>
+                                <td><strong>{{ product.nutritional_info.energy_kcal }} kcal</strong></td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.protein_g is not none %}
+                            <tr>
+                                <td>Protein</td>
+                                <td>{{ product.nutritional_info.protein_g }}g</td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.carbohydrates_g is not none %}
+                            <tr>
+                                <td>Carbohydrates</td>
+                                <td>{{ product.nutritional_info.carbohydrates_g }}g</td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.sugar_g is not none %}
+                            <tr>
+                                <td>&nbsp;&nbsp;↳ Sugar</td>
+                                <td>
+                                    {{ product.nutritional_info.sugar_g }}g
+                                    {% if product.nutritional_info.sugar_g and product.nutritional_info.sugar_g > 12 %}
+                                        <span class="badge bg-warning text-dark ms-1">High</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.fat_g is not none %}
+                            <tr>
+                                <td>Total Fat</td>
+                                <td>{{ product.nutritional_info.fat_g }}g</td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.saturated_fat_g is not none %}
+                            <tr>
+                                <td>&nbsp;&nbsp;↳ Saturated Fat</td>
+                                <td>{{ product.nutritional_info.saturated_fat_g }}g</td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.trans_fat_g is not none %}
+                            <tr>
+                                <td>&nbsp;&nbsp;↳ Trans Fat</td>
+                                <td>
+                                    {{ product.nutritional_info.trans_fat_g }}g
+                                    {% if product.nutritional_info.trans_fat_g == 0 %}
+                                        <span class="badge bg-success ms-1">✓ Zero</span>
+                                    {% else %}
+                                        <span class="badge bg-danger ms-1">⚠️ Contains Trans Fat</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.fiber_g is not none %}
+                            <tr>
+                                <td>Dietary Fiber</td>
+                                <td>{{ product.nutritional_info.fiber_g }}g</td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.sodium_mg is not none %}
+                            <tr>
+                                <td>Sodium</td>
+                                <td>
+                                    {{ product.nutritional_info.sodium_mg }}mg
+                                    {% if product.nutritional_info.sodium_mg and product.nutritional_info.sodium_mg > 600 %}
+                                        <span class="badge bg-warning text-dark ms-1">High</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% if product.nutritional_info.cholesterol_mg is not none %}
+                            <tr>
+                                <td>Cholesterol</td>
+                                <td>{{ product.nutritional_info.cholesterol_mg }}mg</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                <!-- Medicine Information -->
+                {% if product.medicine_info %}
+                <div class="info-section">
+                    <h5><i class="bi bi-capsule"></i> Medicine Information</h5>
+                    
+                    <!-- Schedule & Prescription -->
+                    {% if product.medicine_info.schedule %}
+                    <div class="info-row">
+                        <span class="info-label">Drug Schedule</span>
+                        <span class="info-value">
+                            <span class="schedule-badge {{ product.medicine_info.schedule|lower }}">
+                                {{ product.medicine_info.schedule }}
+                            </span>
+                            {% if product.medicine_info.prescription_required %}
+                                <span class="badge bg-danger ms-2">
+                                    <i class="bi bi-file-medical"></i> Prescription Required
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success ms-2">
+                                    <i class="bi bi-check-circle"></i> OTC (No Prescription)
+                                </span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.medicine_info.composition %}
+                    <div class="info-row">
+                        <span class="info-label">Composition</span>
+                        <span class="info-value">{{ product.medicine_info.composition }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.medicine_info.dosage %}
+                    <div class="info-row">
+                        <span class="info-label">Dosage</span>
+                        <span class="info-value">{{ product.medicine_info.dosage }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.medicine_info.side_effects %}
+                    <div class="info-row">
+                        <span class="info-label">Side Effects</span>
+                        <span class="info-value text-warning">{{ product.medicine_info.side_effects }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.medicine_info.contraindications %}
+                    <div class="info-row">
+                        <span class="info-label">Contraindications</span>
+                        <span class="info-value text-danger">{{ product.medicine_info.contraindications }}</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Find Generic Alternatives Button -->
+                    <div class="mt-3 text-center">
+                        <button class="btn btn-green-india" id="findAlternativesBtn"
+                                onclick="loadAlternatives('{{ product.brand }}', '{{ product.medicine_info.composition }}')">
+                            <i class="bi bi-search"></i> Find Cheaper Generic Alternatives
+                        </button>
+                    </div>
+                    
+                    <!-- Alternatives Container -->
+                    <div id="alternativesContainer" style="display:none;" class="mt-3"></div>
+                </div>
+                {% endif %}
+
+                <!-- FSSAI Verification Result -->
+                <div id="fssaiVerificationResult" style="display:none;" class="info-section">
+                    <h5><i class="bi bi-patch-check"></i> FSSAI Verification Result</h5>
+                    <div id="fssaiResultContent"></div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- ==================== PRODUCT NOT FOUND ==================== -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-5">
+                <div class="not-found-section">
+                    <div class="not-found-icon">🔍</div>
+                    <h3 class="text-muted">Product Not Found</h3>
+                    <p class="text-muted">
+                        No product information found for barcode: <strong><code>{{ barcode }}</code></strong>
+                    </p>
+                    
+                    {% if result.barcode_info %}
+                    <div class="card bg-light border-0 mx-auto mt-4" style="max-width: 400px;">
+                        <div class="card-body">
+                            <h6>Barcode Information:</h6>
+                            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                                <span class="badge bg-secondary">
+                                    Length: {{ result.barcode_info.length }}
+                                </span>
+                                {% if result.barcode_info.country %}
+                                <span class="badge {% if result.barcode_info.is_indian %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                                    {% if result.barcode_info.is_indian %}🇮🇳{% else %}🌍{% endif %}
+                                    {{ result.barcode_info.country }}
+                                </span>
+                                {% endif %}
+                                {% if result.barcode_info.gs1_prefix %}
+                                <span class="badge bg-light text-dark border">
+                                    GS1 Prefix: {{ result.barcode_info.gs1_prefix }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <p class="text-muted small">This could happen because:</p>
+                        <ul class="text-muted small text-start mx-auto" style="max-width: 400px;">
+                            <li>The barcode number may be incorrect</li>
+                            <li>The product may not be in our database yet</li>
+                            <li>The product may be very new or from a small manufacturer</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
+                        <a href="/scan" class="btn btn-india">
+                            <i class="bi bi-upc-scan"></i> Try Scanning Again
+                        </a>
+                        
+                                                <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-house"></i> Go Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function verifyFSSAILicense(licenseNumber) {
+    var container = document.getElementById('fssaiVerificationResult');
+    var content = document.getElementById('fssaiResultContent');
+    
+    container.style.display = 'block';
+    content.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm"></div> Verifying...</div>';
+    
+    try {
+        var response = await fetch('/api/fssai/verify/' + licenseNumber);
+        var data = await response.json();
+        
+        var html = '';
+        
+        if (data.valid === true) {
+            html += '<div class="alert alert-success mb-2">';
+            html += '<i class="bi bi-check-circle-fill"></i> <strong>License Verified!</strong>';
+            html += '</div>';
+        } else if (data.valid === false) {
+            html += '<div class="alert alert-danger mb-2">';
+            html += '<i class="bi bi-x-circle-fill"></i> <strong>Verification Failed</strong>';
+            html += '</div>';
+        } else {
+            html += '<div class="alert alert-warning mb-2">';
+            html += '<i class="bi bi-question-circle-fill"></i> <strong>Could not verify online</strong>';
+            html += '</div>';
+        }
+        
+        if (data.license_holder) {
+            html += '<div class="info-row"><span class="info-label">License Holder</span>';
+            html += '<span class="info-value">' + data.license_holder + '</span></div>';
+        }
+        if (data.license_type) {
+            html += '<div class="info-row"><span class="info-label">License Type</span>';
+            html += '<span class="info-value">' + data.license_type + '</span></div>';
+        }
+        if (data.state) {
+            html += '<div class="info-row"><span class="info-label">State</span>';
+            html += '<span class="info-value">' + data.state + '</span></div>';
+        }
+        if (data.status) {
+            html += '<div class="info-row"><span class="info-label">Status</span>';
+            html += '<span class="info-value"><span class="badge bg-success">' + data.status + '</span></span></div>';
+        }
+        if (data.valid_until) {
+            html += '<div class="info-row"><span class="info-label">Valid Until</span>';
+            html += '<span class="info-value">' + data.valid_until + '</span></div>';
+        }
+        if (data.food_categories && data.food_categories.length > 0) {
+            html += '<div class="info-row"><span class="info-label">Categories</span>';
+            html += '<span class="info-value">' + data.food_categories.join(', ') + '</span></div>';
+        }
+        if (data.message) {
+            html += '<p class="text-muted small mt-2 mb-0">' + data.message + '</p>';
+        }
+        
+        content.innerHTML = html;
+    } catch(err) {
+        content.innerHTML = '<div class="alert alert-danger">Error verifying license. Please try again.</div>';
+    }
+}
+
+async function loadAlternatives(brand, composition) {
+    var container = document.getElementById('alternativesContainer');
+    var btn = document.getElementById('findAlternativesBtn');
+    
+    container.style.display = 'block';
+    container.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div> Searching for alternatives...</div>';
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Searching...';
+    }
+    
+    try {
+        var response = await fetch('/api/medicine/alternatives', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({brand: brand, composition: composition})
+        });
+        
+        var data = await response.json();
+        var html = '';
+        
+        if (data.alternatives && data.alternatives.length > 0) {
+            html += '<h6 class="text-success"><i class="bi bi-check2-all"></i> Generic Alternatives Found!</h6>';
+            
+            data.alternatives.forEach(function(alt) {
+                html += '<div class="alternative-card">';
+                html += '<h6 class="mb-1">' + alt.generic_name + ' ' + alt.strength + '</h6>';
+                
+                html += '<div class="mb-2">';
+                alt.brands.forEach(function(b) {
+                    html += '<div class="d-flex justify-content-between align-items-center py-1">';
+                    html += '<span>' + b.name + ' <small class="text-muted">(' + b.manufacturer + ')</small></span>';
+                    html += '<span class="fw-bold">₹' + b.mrp.toFixed(2) + '</span>';
+                    html += '</div>';
+                });
+                html += '</div>';
+                
+                if (alt.jan_aushadhi_available) {
+                    html += '<div class="p-2 rounded" style="background:#e3f2fd;">';
+                    html += '<span class="jan-aushadhi-badge">Jan Aushadhi</span> ';
+                    html += '<strong>₹' + alt.jan_aushadhi_price.toFixed(2) + '</strong>';
+                    if (alt.potential_savings) {
+                        html += ' <span class="savings-badge ms-2">Save ' + alt.potential_savings.savings_percent + '%</span>';
+                    }
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+            });
+            
+            if (data.jan_aushadhi_info) {
+                html += '<div class="card bg-light border-0 mt-3">';
+                html += '<div class="card-body p-3">';
+                html += '<h6><i class="bi bi-info-circle"></i> ' + data.jan_aushadhi_info.scheme_name + '</h6>';
+                html += '<p class="small mb-1">' + data.jan_aushadhi_info.description + '</p>';
+                html += '<p class="small mb-1"><strong>Stores:</strong> ' + data.jan_aushadhi_info.total_stores + '</p>';
+                html += '<a href="' + data.jan_aushadhi_info.website + '" target="_blank" class="btn btn-sm btn-outline-primary">';
+                html += '<i class="bi bi-box-arrow-up-right"></i> Visit Website</a>';
+                html += '</div></div>';
+            }
+        } else {
+            html += '<div class="alert alert-info">';
+            html += '<i class="bi bi-info-circle"></i> No generic alternatives found in our database.';
+            html += '</div>';
+        }
+        
+        container.innerHTML = html;
+    } catch(err) {
+        container.innerHTML = '<div class="alert alert-danger">Error searching alternatives.</div>';
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-search"></i> Find Cheaper Generic Alternatives';
+        }
+    }
+}
+</script>
+{% endblock %}

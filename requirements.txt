@@ -1,0 +1,14 @@
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+Flask-CORS==4.0.0
+pyzbar==0.1.9
+opencv-python==4.8.1.78
+Pillow==10.1.0
+requests==2.31.0
+python-barcode==0.15.1
+gunicorn==21.2.0
+python-dotenv==1.0.0
+beautifulsoup4==4.12.2
+qrcode==7.4.2
+numpy==1.26.2

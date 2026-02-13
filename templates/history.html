@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Scan History - BharatScan{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <h2>
+                    <i class="bi bi-clock-history"></i> Scan History
+                </h2>
+                <div class="d-flex gap-2">
+                    <a href="/scan" class="btn btn-india">
+                        <i class="bi bi-upc-scan"></i> New Scan
+                    </a>
+                    {% if history and history|length > 0 %}
+                    <button class="btn btn-outline-danger btn-sm" onclick="confirmClearHistory()">
+                        <i class="bi bi-trash"></i> Clear
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if history and history|length > 0 %}
+                
+                <!-- Stats Summary -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light border-0 text-center p-3">
+                            <h4 class="mb-0 text-primary">{{ history|length }}</h4>
+                            <small class="text-muted">Total Scans</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light border-0 text-center p-3">
+                            <h4 class="mb-0 text-success">
+                                {{ history|selectattr('product_found')|list|length }}
+                            </h4>
+                            <small class="text-muted">Products Found</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light border-0 text-center p-3">
+                            <h4 class="mb-0 text-danger">
+                                {{ history|rejectattr('product_found')|list|length }}
+                            </h4>
+                            <small class="text-muted">Not Found</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light border-0 text-center p-3">
+                            <h4 class="mb-0 text-info">
+                                {% set unique_barcodes = [] %}
+                                {% for item in history %}
+                                    {% if item.barcode_scanned not in unique_barcodes %}
+                                        {% if unique_barcodes.append(item.barcode_scanned) %}{% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ unique_barcodes|length }}
+                            </h4>
+                            <small class="text-muted">Unique Products</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="d-flex gap-2 mb-3 flex-wrap">
+                    <button class="btn btn-sm btn-outline-secondary active filter-btn" data-filter="all">
+                        All
+                    </button>
+                    <button class="btn btn-sm btn-outline-success filter-btn" data-filter="found">
+                        <i class="bi bi-check-circle"></i> Found
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger filter-btn" data-filter="not-found">
+                        <i class="bi bi-x-circle"></i> Not Found
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="camera">
+                        <i class="bi bi-camera"></i> Camera
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="upload">
+                        <i class="bi bi-upload"></i> Upload
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="manual">
+                        <i class="bi bi-keyboard"></i> Manual
+                    </button>
+                </div>
+
+                <!-- History List -->
+                <div id="historyList">
+                    {% for item in history %}
+                    <div class="history-item" 
+                         data-found="{{ 'true' if item.product_found else 'false' }}"
+                         data-method="{{ item.scan_method or 'unknown' }}">
+                        
+                        <!-- Status Icon -->
+                        <div class="scan-icon {{ 'found' if item.product_found else 'not-found' }}">
+                            {% if item.product_found %}
+                                <i class="bi bi-check-circle-fill"></i>
+                            {% else %}
+                                <i class="bi bi-x-circle-fill"></i>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Scan Details -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-1">
+                                <div>
+                                    {% if item.product and item.product.name %}
+                                        <h6 class="mb-0">{{ item.product.name }}</h6>
+                                        {% if item.product.brand %}
+                                            <small class="text-muted">{{ item.product.brand }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <h6 class="mb-0 text-muted">Product Not Found</h6>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">
+                                        {{ item.scanned_at }}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Badges -->
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                <span class="badge bg-light text-dark border" style="font-size: 0.75rem;">
+                                    <i class="bi bi-upc"></i> {{ item.barcode_scanned }}
+                                </span>
+                                
+                                {% if item.scan_method %}
+                                <span class="badge bg-light text-dark border" style="font-size: 0.75rem;">
+                                    {% if item.scan_method == 'camera' %}
+                                        <i class="bi bi-camera"></i>
+                                    {% elif item.scan_method == 'upload' %}
+                                        <i class="bi bi-upload"></i>
+                                    {% elif item.scan_method == 'manual' %}
+                                        <i class="bi bi-keyboard"></i>
+                                    {% elif item.scan_method == 'web' %}
+                                        <i class="bi bi-globe"></i>
+                                    {% endif %}
+                                    {{ item.scan_method | title }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if item.data_source %}
+                                <span class="badge bg-light text-dark border" style="font-size: 0.75rem;">
+                                    📡 {{ item.data_source }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if item.product and item.product.category %}
+                                <span class="badge 
+                                    {% if item.product.category == 'food' %}bg-success
+                                    {% elif item.product.category == 'medicine' %}bg-primary
+                                    {% elif item.product.category == 'nutraceutical' %}bg-info
+                                    {% elif item.product.category == 'skincare' %}bg-warning text-dark
+                                    {% elif item.product.category == 'haircare' %}bg-secondary
+                                    {% else %}bg-dark
+                                    {% endif %}" style="font-size: 0.75rem;">
+                                    {{ item.product.category | title }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Action Button -->
+                        <div class="ms-2">
+                            <a href="/result/{{ item.barcode_scanned }}" 
+                               class="btn btn-sm btn-outline-india">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- No Results After Filter -->
+                <div id="noFilterResults" style="display:none;" class="text-center py-5">
+                    <i class="bi bi-funnel display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No scans match this filter</p>
+                </div>
+
+            {% else %}
+                <!-- Empty State -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-body text-center py-5">
+                        <div style="font-size: 4rem;">📱</div>
+                        <h4 class="text-muted mt-3">No Scan History Yet</h4>
+                        <p class="text-muted">
+                            Start scanning product barcodes to build your history.
+                            <br>All your scans will appear here.
+                        </p>
+                        <a href="/scan" class="btn btn-india btn-lg mt-2">
+                            <i class="bi bi-upc-scan"></i> Scan Your First Product
+                        </a>
+                        
+                        <!-- Quick Try -->
+                        <div class="mt-4">
+                            <p class="text-muted small">Or try a sample product:</p>
+                            <div class="d-flex justify-content-center flex-wrap gap-2">
+                                <a href="/result/8901058851854" class="btn btn-sm btn-outline-secondary">
+                                    Parle-G
+                                </a>
+                                <a href="/result/8901262150255" class="btn btn-sm btn-outline-secondary">
+                                    Maggi
+                                </a>
+                                <a href="/result/8901790753456" class="btn btn-sm btn-outline-secondary">
+                                    Crocin
+                                </a>
+                                <a href="/result/8901689152012" class="btn btn-sm btn-outline-secondary">
+                                    Himalaya Ashvagandha
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ==================== FILTER FUNCTIONALITY ====================
+document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        // Update active state
+        document.querySelectorAll('.filter-btn').forEach(function(b) {
+            b.classList.remove('active');
+        });
+        this.classList.add('active');
+        
+        var filter = this.getAttribute('data-filter');
+        var items = document.querySelectorAll('.history-item');
+        var visibleCount = 0;
+        
+        items.forEach(function(item) {
+            var found = item.getAttribute('data-found');
+            var method = item.getAttribute('data-method');
+            var show = false;
+            
+            if (filter === 'all') {
+                show = true;
+            } else if (filter === 'found') {
+                show = (found === 'true');
+            } else if (filter === 'not-found') {
+                show = (found === 'false');
+            } else if (filter === 'camera' || filter === 'upload' || filter === 'manual') {
+                show = (method === filter);
+            }
+            
+            item.style.display = show ? 'flex' : 'none';
+            if (show) visibleCount++;
+        });
+        
+        // Show/hide "no results" message
+        var noResults = document.getElementById('noFilterResults');
+        if (noResults) {
+            noResults.style.display = (visibleCount === 0) ? 'block' : 'none';
+        }
+    });
+});
+
+// ==================== CLEAR HISTORY ====================
+function confirmClearHistory() {
+    if (confirm('Are you sure you want to clear all scan history? This cannot be undone.')) {
+        // Send request to clear history (you can add this API endpoint)
+        alert('History clear feature coming soon!');
+    }
+}
+
+// ==================== FORMAT DATES ====================
+document.addEventListener('DOMContentLoaded', function() {
+    // Format ISO dates to readable format
+    document.querySelectorAll('.history-item small.text-muted').forEach(function(el) {
+        var text = el.textContent.trim();
+        if (text.includes('T') || text.includes('-')) {
+            try {
+                var date = new Date(text);
+                if (!isNaN(date)) {
+                    el.textContent = date.toLocaleDateString('en-IN', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+            } catch(e) {
+                // Keep original text if parsing fails
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% block title %}🇮🇳 BharatScan - Indian Product Barcode Scanner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8 text-center">
+            <div class="hero-section py-5">
+                <h1 class="display-4 fw-bold text-gradient">
+                    🇮🇳 BharatScan
+                </h1>
+                <p class="lead text-muted mt-3">
+                    India's Comprehensive Product Barcode Scanner
+                </p>
+                <p class="text-muted">
+                    Scan any Indian product barcode to get detailed information about food, medicines,
+                    nutraceuticals, skincare, and haircare products. Integrated with FSSAI, CDSCO,
+                    and international databases.
+                </p>
+                <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
+                    <a href="/scan" class="btn btn-lg btn-india px-5">
+                        <i class="bi bi-upc-scan"></i> Start Scanning
+                    </a>
+                    <a href="#features" class="btn btn-lg btn-outline-secondary px-4">
+                        <i class="bi bi-info-circle"></i> Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Manual Search -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-center mb-3">
+                        <i class="bi bi-search"></i> Quick Barcode Lookup
+                    </h5>
+                    <form id="quickSearchForm" class="d-flex gap-2">
+                        <input type="text" id="quickBarcode" class="form-control form-control-lg" 
+                               placeholder="Enter barcode (e.g., 8901058851854)" 
+                               maxlength="50">
+                        <button type="submit" class="btn btn-india btn-lg px-4">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">
+                            Try: 
+                            <a href="/result/8901058851854" class="text-decoration-none">8901058851854</a> (Parle-G) | 
+                            <a href="/result/8901262150255" class="text-decoration-none">8901262150255</a> (Maggi) | 
+                            <a href="/result/8901790753456" class="text-decoration-none">8901790753456</a> (Crocin)
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="row g-3 mb-5">
+        <div class="col-6 col-md-4 col-lg">
+            <div class="card stat-card bg-food text-center p-3 h-100">
+                <div class="stat-icon"><i class="bi bi-cup-hot-fill"></i></div>
+                <h3 class="mb-0">{{ stats.food_products }}</h3>
+                <small>Food Products</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg">
+            <div class="card stat-card bg-medicine text-center p-3 h-100">
+                <div class="stat-icon"><i class="bi bi-capsule"></i></div>
+                <h3 class="mb-0">{{ stats.medicines }}</h3>
+                <small>Medicines</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg">
+            <div class="card stat-card bg-nutra text-center p-3 h-100">
+                <div class="stat-icon"><i class="bi bi-flower1"></i></div>
+                <h3 class="mb-0">{{ stats.nutraceuticals }}</h3>
+                <small>Nutraceuticals</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg">
+            <div class="card stat-card bg-skincare text-center p-3 h-100">
+                <div class="stat-icon"><i class="bi bi-droplet-fill"></i></div>
+                <h3 class="mb-0">{{ stats.skincare }}</h3>
+                <small>Skincare</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg">
+            <div class="card stat-card bg-haircare text-center p-3 h-100">
+                <div class="stat-icon"><i class="bi bi-scissors"></i></div>
+                <h3 class="mb-0">{{ stats.haircare }}</h3>
+                <small>Haircare</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="row g-4 mb-5">
+        <div class="col-12">
+            <h3 class="text-center mb-4">🔍 What Can BharatScan Do?</h3>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 feature-card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">📷</div>
+                    <h5>Camera & Image Scanning</h5>
+                    <p class="text-muted small">
+                        Scan barcodes using your device camera or upload product images.
+                        Supports EAN-13, EAN-8, UPC-A, QR codes, and more.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 feature-card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">🏛️</div>
+                    <h5>Indian Regulatory Data</h5>
+                    <p class="text-muted small">
+                        FSSAI license verification, CDSCO drug info, BIS standards,
+                        AGMARK certification, and veg/non-veg marking details.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 feature-card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">⚠️</div>
+                    <h5>Safety Warnings</h5>
+                    <p class="text-muted small">
+                        Banned ingredient detection, allergen alerts, drug interaction
+                        warnings, and FSSAI recall notifications.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 feature-card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">💊</div>
+                    <h5>Generic Medicine Alternatives</h5>
+                    <p class="text-muted small">
+                        Find affordable generic alternatives and Jan Aushadhi options
+                        for medicines. Compare prices across brands.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 feature-card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">🥗</div>
+                    <h5>Nutrition Analysis</h5>
+                    <p class="text-muted small">
+                        Detailed nutritional information, dietary markers (veg/vegan/organic),
+                        health advisories for high sodium/sugar/trans fat.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 feature-card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon mb-3">🌿</div>
+                    <h5>Skincare & Haircare Info</h5>
+                    <p class="text-muted small">
+                        Ingredient analysis, paraben-free/sulphate-free detection,
+                        cruelty-free status, and skin type recommendations.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Products Table -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="text-center mb-4">🛒 Try These Indian Products</h3>
+        </div>
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-hover shadow-sm rounded">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Barcode</th>
+                            <th>Product</th>
+                            <th>Brand</th>
+                            <th>Category</th>
+                            <th>MRP</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>8901058851854</code></td>
+                            <td>Parle-G Gold Biscuits</td>
+                            <td>Parle</td>
+                            <td><span class="badge bg-success">Food</span></td>
+                            <td>₹30.00</td>
+                            <td><a href="/result/8901058851854" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8901262150255</code></td>
+                            <td>Maggi 2-Minute Noodles</td>
+                            <td>Nestle</td>
+                            <td><span class="badge bg-success">Food</span></td>
+                            <td>₹14.00</td>
+                            <td><a href="/result/8901262150255" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8901030793424</code></td>
+                            <td>Amul Taaza Toned Milk</td>
+                            <td>Amul</td>
+                            <td><span class="badge bg-success">Food</span></td>
+                            <td>₹27.00</td>
+                            <td><a href="/result/8901030793424" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8901790753456</code></td>
+                            <td>Crocin Advance 500mg</td>
+                            <td>GSK</td>
+                            <td><span class="badge bg-primary">Medicine</span></td>
+                            <td>₹33.51</td>
+                            <td><a href="/result/8901790753456" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8901790789456</code></td>
+                            <td>Azithral 500mg</td>
+                            <td>Alembic</td>
+                            <td><span class="badge bg-primary">Medicine</span></td>
+                            <td>₹103.00</td>
+                            <td><a href="/result/8901790789456" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8901689152012</code></td>
+                            <td>Himalaya Ashvagandha</td>
+                            <td>Himalaya</td>
+                            <td><span class="badge bg-info">Nutraceutical</span></td>
+                            <td>₹230.00</td>
+                            <td><a href="/result/8901689152012" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8901689157891</code></td>
+                            <td>Dabur Chyawanprash</td>
+                            <td>Dabur</td>
+                            <td><span class="badge bg-info">Nutraceutical</span></td>
+                            <td>₹325.00</td>
+                            <td><a href="/result/8901689157891" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8901030697289</code></td>
+                            <td>Lakme Sun Expert SPF 50</td>
+                            <td>Lakme</td>
+                            <td><span class="badge bg-warning text-dark">Skincare</span></td>
+                            <td>₹399.00</td>
+                            <td><a href="/result/8901030697289" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8906009540115</code></td>
+                            <td>Mamaearth Vitamin C Face Wash</td>
+                            <td>Mamaearth</td>
+                            <td><span class="badge bg-warning text-dark">Skincare</span></td>
+                            <td>₹349.00</td>
+                            <td><a href="/result/8906009540115" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8901030718960</code></td>
+                            <td>Dove Hair Fall Rescue Shampoo</td>
+                            <td>Dove</td>
+                            <td><span class="badge bg-secondary">Haircare</span></td>
+                            <td>₹260.00</td>
+                            <td><a href="/result/8901030718960" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                        <tr>
+                            <td><code>8904245700577</code></td>
+                            <td>Biotique Bio Kelp Shampoo</td>
+                            <td>Biotique</td>
+                            <td><span class="badge bg-secondary">Haircare</span></td>
+                            <td>₹199.00</td>
+                            <td><a href="/result/8904245700577" class="btn btn-sm btn-india">View</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="text-center mb-4">🔄 How It Works</h3>
+        </div>
+        <div class="col-md-3 text-center mb-3">
+            <div class="p-3">
+                <div style="font-size: 3rem;">1️⃣</div>
+                <h6 class="mt-2">Scan Barcode</h6>
+                <p class="text-muted small">Use camera, upload image, or type barcode manually</p>
+            </div>
+        </div>
+        <div class="col-md-3 text-center mb-3">
+            <div class="p-3">
+                <div style="font-size: 3rem;">2️⃣</div>
+                <h6 class="mt-2">Search Databases</h6>
+                <p class="text-muted small">Checks local DB, FSSAI, CDSCO, and Open Food Facts</p>
+            </div>
+        </div>
+        <div class="col-md-3 text-center mb-3">
+            <div class="p-3">
+                <div style="font-size: 3rem;">3️⃣</div>
+                <h6 class="mt-2">Get Details</h6>
+                <p class="text-muted small">View nutrition, ingredients, regulatory info, and warnings</p>
+            </div>
+        </div>
+        <div class="col-md-3 text-center mb-3">
+            <div class="p-3">
+                <div style="font-size: 3rem;">4️⃣</div>
+                <h6 class="mt-2">Stay Safe</h6>
+                <p class="text-muted small">Get alerts for banned ingredients and find cheaper alternatives</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('quickSearchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const barcode = document.getElementById('quickBarcode').value.trim();
+    if (barcode) {
+        window.location.href = '/result/' + barcode;
+    }
+});
+</script>
+{% endblock %}
