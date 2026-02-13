@@ -1,5 +1,4 @@
 import requests
-from config import Config
 
 
 class OpenFoodFactsService:
@@ -16,7 +15,7 @@ class OpenFoodFactsService:
     def get_product(self, barcode):
         """Get product details by barcode from Open Food Facts"""
         try:
-            url = f"{self.BASE_URL}/product/{barcode}.json"
+            url = self.BASE_URL + "/product/" + str(barcode) + ".json"
             response = self.session.get(url, timeout=10)
 
             if response.status_code == 200:
@@ -27,13 +26,13 @@ class OpenFoodFactsService:
             return None
 
         except requests.RequestException as e:
-            print(f"Open Food Facts API error: {e}")
+            print("Open Food Facts API error: " + str(e))
             return None
 
     def search_products(self, query, country='india', page=1, page_size=20):
         """Search products on Open Food Facts"""
         try:
-            url = f"{self.BASE_URL}/search"
+            url = self.BASE_URL + "/search"
             params = {
                 'search_terms': query,
                 'search_simple': 1,
@@ -51,7 +50,7 @@ class OpenFoodFactsService:
             return []
 
         except requests.RequestException as e:
-            print(f"Open Food Facts search error: {e}")
+            print("Open Food Facts search error: " + str(e))
             return []
 
     def _format_product(self, product_data):
@@ -80,18 +79,11 @@ class OpenFoodFactsService:
     def get_indian_products(self, category=None, page=1):
         """Get products specifically from India"""
         try:
-            url = f"https://world.openfoodfacts.org/country/india.json"
-            params = {'page': page}
+            url = "https://world.openfoodfacts.org/country/india.json"
             if category:
-                url = f"https://world.openfoodfacts.org/country/
-    def get_indian_products(self, category=None, page=1):
-        """Get products specifically from India"""
-        try:
-            url = f"https://world.openfoodfacts.org/country/india.json"
-            params = {'page': page}
-            if category:
-                url = f"https://world.openfoodfacts.org/country/india/category/{category}.json"
+                url = "https://world.openfoodfacts.org/country/india/category/" + str(category) + ".json"
 
+            params = {'page': page}
             response = self.session.get(url, params=params, timeout=10)
 
             if response.status_code == 200:
@@ -106,5 +98,5 @@ class OpenFoodFactsService:
             return {'products': [], 'count': 0}
 
         except requests.RequestException as e:
-            print(f"Error fetching Indian products: {e}")
+            print("Error fetching Indian products: " + str(e))
             return {'products': [], 'count': 0}
