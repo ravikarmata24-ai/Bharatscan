@@ -1,452 +1,465 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BharatScan - Scanner Test v3</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BharatScan - Safari Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body { font-family: Arial; max-width: 600px; margin: 20px auto; padding: 10px; }
-        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        body { font-family: -apple-system, Arial; max-width: 600px; margin: 10px auto; padding: 10px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 8px; }
         .ok { background: #d4edda; color: #155724; }
         .fail { background: #f8d7da; color: #721c24; }
         .info { background: #d1ecf1; color: #0c5460; }
-        button { padding: 12px 24px; margin: 5px; font-size: 16px; border-radius: 8px; border: 2px solid #333; background: #fff; }
-        #test-video { width: 100%; max-width: 500px; background: #000; border-radius: 8px; }
-        #test-canvas { display: none; }
+        .warn { background: #fff3cd; color: #856404; }
+        button { padding: 14px 28px; margin: 5px; font-size: 17px; border-radius: 10px; border: 2px solid #333; background: #fff; -webkit-appearance: none; }
+        button:active { background: #ddd; }
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; }
         #log { background: #1a1a1a; color: #0f0; padding: 15px; font-family: monospace;
-               font-size: 11px; max-height: 400px; overflow-y: auto; border-radius: 5px;
-               white-space: pre-wrap; }
-        .big-result { font-size: 24px; font-weight: bold; padding: 20px; text-align: center; }
-        .upload-btn { display: inline-block; padding: 12px 24px; border-radius: 8px; font-size: 16px; margin: 5px; cursor: pointer; }
+               font-size: 11px; max-height: 300px; overflow-y: auto; border-radius: 8px;
+               white-space: pre-wrap; -webkit-overflow-scrolling: touch; }
+        .big-result { font-size: 22px; font-weight: bold; padding: 20px; text-align: center; }
+        h3 { margin-top: 25px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
     </style>
 </head>
 <body>
-    <h2>🔧 BharatScan Scanner Test v3</h2>
+    <h2>🔧 BharatScan Safari Test</h2>
+    <p>Optimized for iPhone Safari</p>
 
-    <h3>Test 1: Library Check</h3>
-    <div id="lib-results"></div>
+    <h3>1️⃣ Device Info</h3>
+    <div id="device-info"></div>
 
-    <h3>Test 2: Camera</h3>
-    <button onclick="testBackCamera()">📷 Start Back Camera</button>
+    <h3>2️⃣ Camera Barcode Scan (html5-qrcode)</h3>
+    <p>This uses the html5-qrcode library which works best on Safari.</p>
+    <button onclick="startHtml5QrScan()">📷 Start Camera Scanner</button>
+    <button onclick="stopHtml5QrScan()">⏹️ Stop</button>
+    <div id="reader"></div>
+    <div id="h5-result"></div>
+
+    <h3>3️⃣ Camera Barcode Scan (Direct Video + ZXing)</h3>
+    <button onclick="startDirectScan()">📷 Start Direct Scanner</button>
+    <button onclick="stopDirectScan()">⏹️ Stop</button>
     <br><br>
-    <video id="test-video" autoplay playsinline muted></video>
-    <div id="camera-result"></div>
+    <video id="direct-video" autoplay playsinline muted style="width:100%; max-width:500px; background:#000; border-radius:8px;"></video>
+    <div id="direct-result"></div>
 
-    <h3>Test 3: Live Barcode Scan</h3>
-    <p>Start camera first, then click scan and point at barcode.</p>
-    <button onclick="startZXingScan()">▶️ Start Scanning</button>
-    <button onclick="stopAllScans()">⏹️ Stop</button>
-    <div id="scan-result"></div>
+    <h3>4️⃣ Photo Upload</h3>
+    <p>Option A — Take photo now:</p>
+    <input type="file" accept="image/*" capture="environment" onchange="scanPhoto(event)" style="font-size:16px; margin:5px 0;">
 
-    <h3>Test 4: Upload Image</h3>
-    <p><strong>Option A:</strong> Take photo directly</p>
-    <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="testImageScan(event)" style="margin: 5px 0; font-size: 16px;">
+    <p>Option B — Pick from Photos app:</p>
+    <input type="file" accept="image/png,image/jpeg,image/jpg" onchange="scanPhoto(event)" style="font-size:16px; margin:5px 0;">
 
-    <p><strong>Option B:</strong> Pick from gallery (no camera)</p>
-    <input type="file" id="gallery-input" accept="image/png, image/jpeg, image/jpg, image/webp" onchange="testImageScan(event)" style="margin: 5px 0; font-size: 16px;">
-
-    <div id="image-preview" style="display:none; margin: 10px 0;">
-        <img id="preview-img" src="" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+    <div id="photo-preview" style="display:none; margin:10px 0;">
+        <img id="photo-img" src="" style="max-width:100%; max-height:200px; border-radius:8px;">
     </div>
-    <div id="image-result"></div>
+    <div id="photo-result"></div>
 
-    <h3>Test 5: Scan Regions of Last Photo</h3>
-    <button onclick="scanRegions()">🔍 Try All Regions</button>
-    <div id="region-result"></div>
-
-    <h3>Debug Log</h3>
-    <button onclick="document.getElementById('log').textContent=''">🗑️ Clear Log</button>
+    <h3>📋 Debug Log</h3>
+    <button onclick="document.getElementById('log').textContent=''">🗑️ Clear</button>
     <div id="log"></div>
 
-    <canvas id="test-canvas"></canvas>
+    <canvas id="work-canvas" style="display:none;"></canvas>
 
+    <!-- Load html5-qrcode -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Load ZXing -->
     <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 
     <script>
         var logDiv = document.getElementById('log');
-        var videoStream = null;
-        var scanInterval = null;
-        var lastImage = null;
+        var html5Scanner = null;
+        var directStream = null;
+        var directInterval = null;
         var zxingReader = null;
+        var lastPhotoImage = null;
 
         function log(msg) {
             var time = new Date().toLocaleTimeString();
             logDiv.textContent += time + ': ' + msg + '\n';
             logDiv.scrollTop = logDiv.scrollHeight;
-            console.log(msg);
-        }
-
-        // Initialize ZXing
-        try {
-            zxingReader = new ZXing.BrowserMultiFormatReader();
-            log('ZXing reader created');
-        } catch(e) {
-            log('ZXing init error: ' + e);
         }
 
         // ============================
-        // TEST 1: Libraries
+        // 1. Device Info
         // ============================
-        function testLibraries() {
-            var results = document.getElementById('lib-results');
+        function showDeviceInfo() {
+            var info = document.getElementById('device-info');
+            var ua = navigator.userAgent;
             var html = '';
 
+            var isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+            var isIOS = /iPhone|iPad/.test(ua);
+            var iosVersion = 'Unknown';
+            var match = ua.match(/OS (\d+_\d+)/);
+            if (match) iosVersion = match[1].replace('_', '.');
+
+            html += '<div class="status info">';
+            html += '📱 <strong>iPhone detected</strong><br>';
+            html += 'iOS Version: ' + iosVersion + '<br>';
+            html += 'Safari: ' + (isSafari ? 'Yes' : 'No') + '<br>';
+            html += 'HTTPS: ' + (location.protocol === 'https:' ? 'Yes ✅' : 'No ❌') + '<br>';
+            html += '</div>';
+
+            // Check libraries
             if (typeof Html5Qrcode !== 'undefined') {
                 html += '<div class="status ok">✅ html5-qrcode loaded</div>';
-                log('html5-qrcode: LOADED');
+                log('html5-qrcode: OK');
             } else {
-                html += '<div class="status fail">❌ html5-qrcode NOT loaded</div>';
+                html += '<div class="status fail">❌ html5-qrcode failed</div>';
                 log('html5-qrcode: FAILED');
             }
 
             if (typeof ZXing !== 'undefined') {
                 html += '<div class="status ok">✅ ZXing loaded</div>';
-                log('ZXing: LOADED');
+                log('ZXing: OK');
+                try {
+                    zxingReader = new ZXing.BrowserMultiFormatReader();
+                    log('ZXing reader created');
+                } catch(e) {
+                    log('ZXing reader error: ' + e);
+                }
             } else {
-                html += '<div class="status fail">❌ ZXing NOT loaded</div>';
+                html += '<div class="status fail">❌ ZXing failed</div>';
                 log('ZXing: FAILED');
             }
 
-            if (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-                html += '<div class="status ok">✅ HTTPS</div>';
-                log('HTTPS: YES');
+            if (typeof BarcodeDetector !== 'undefined') {
+                html += '<div class="status ok">✅ Native BarcodeDetector available</div>';
+                log('BarcodeDetector: YES');
             } else {
-                html += '<div class="status fail">❌ NOT HTTPS</div>';
-                log('HTTPS: NO');
+                html += '<div class="status warn">⚠️ Native BarcodeDetector not available</div>';
+                log('BarcodeDetector: NO');
             }
 
-            // Detect device
-            var ua = navigator.userAgent;
-            var device = 'Unknown';
-            if (/iPhone/.test(ua)) device = 'iPhone';
-            else if (/iPad/.test(ua)) device = 'iPad';
-            else if (/Android/.test(ua)) device = 'Android';
-            else if (/Windows/.test(ua)) device = 'Windows PC';
-            else if (/Mac/.test(ua)) device = 'Mac';
+            log('iOS: ' + iosVersion + ', Safari: ' + isSafari);
+            log('UA: ' + ua);
 
-            html += '<div class="status info">📱 Device: ' + device + '<br>Browser: ' + navigator.userAgent.split(') ')[0].split('(')[1] + '</div>';
-            log('Device: ' + device);
-            log('UserAgent: ' + ua);
-
-            results.innerHTML = html;
+            info.innerHTML = html;
         }
-        testLibraries();
+        showDeviceInfo();
 
         // ============================
-        // TEST 2: Back Camera
+        // 2. html5-qrcode Camera Scanner
+        // This is the BEST method for Safari
         // ============================
-        function testBackCamera() {
-            if (videoStream) {
-                videoStream.getTracks().forEach(function(t) { t.stop(); });
+        function startHtml5QrScan() {
+            var result = document.getElementById('h5-result');
+            result.innerHTML = '<div class="status info">Starting camera...</div>';
+            log('Starting html5-qrcode scanner...');
+
+            if (html5Scanner) {
+                try { html5Scanner.stop(); } catch(e) {}
             }
 
-            var result = document.getElementById('camera-result');
+            html5Scanner = new Html5Qrcode("reader");
+
+            var config = {
+                fps: 10,
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    var w = Math.floor(viewfinderWidth * 0.85);
+                    var h = Math.floor(w * 0.4);
+                    return { width: w, height: h };
+                },
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.QR_CODE
+                ],
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: false
+                }
+            };
+
+            html5Scanner.start(
+                { facingMode: "environment" },
+                config,
+                function(decodedText, decodedResult) {
+                    // SUCCESS
+                    log('*** html5-qrcode FOUND: ' + decodedText + ' ***');
+                    log('Format: ' + decodedResult.result.format.formatName);
+                    result.innerHTML = '<div class="status ok big-result">✅ ' + decodedText + '</div>' +
+                        '<div>Format: ' + decodedResult.result.format.formatName + '</div>' +
+                        '<a href="/result/' + decodedText + '" style="font-size:18px;">View Product →</a>';
+                    stopHtml5QrScan();
+                    playBeep();
+                },
+                function(errorMessage) {
+                    // This fires every frame — ignore it
+                }
+            ).then(function() {
+                log('html5-qrcode camera started');
+                result.innerHTML = '<div class="status ok">🟢 Camera active — point at barcode, hold steady</div>';
+            }).catch(function(err) {
+                log('html5-qrcode start error: ' + err);
+                result.innerHTML = '<div class="status fail">❌ Camera error: ' + err + '</div>';
+            });
+        }
+
+        function stopHtml5QrScan() {
+            if (html5Scanner) {
+                html5Scanner.stop().then(function() {
+                    log('html5-qrcode stopped');
+                }).catch(function(e) {
+                    log('Stop error: ' + e);
+                });
+            }
+        }
+
+        // ============================
+        // 3. Direct Video + ZXing Scanner
+        // ============================
+        function startDirectScan() {
+            var result = document.getElementById('direct-result');
             result.innerHTML = '<div class="status info">Starting camera...</div>';
-            log('Requesting back camera...');
+
+            if (directStream) {
+                directStream.getTracks().forEach(function(t) { t.stop(); });
+            }
 
             navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: { ideal: "environment" },
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 }
             }).then(function(stream) {
-                videoStream = stream;
-                var video = document.getElementById('test-video');
+                directStream = stream;
+                var video = document.getElementById('direct-video');
                 video.srcObject = stream;
 
-                var track = stream.getVideoTracks()[0];
-                var settings = track.getSettings();
+                var settings = stream.getVideoTracks()[0].getSettings();
+                log('Direct camera: ' + (settings.width || '?') + 'x' + (settings.height || '?'));
 
-                result.innerHTML = '<div class="status ok">✅ Camera working!<br>' +
-                    'Resolution: ' + (settings.width || '?') + 'x' + (settings.height || '?') + '<br>' +
-                    'Facing: ' + (settings.facingMode || 'unknown') + '</div>';
-                log('Camera OK: ' + (settings.width || '?') + 'x' + (settings.height || '?') +
-                    ' facing=' + (settings.facingMode || 'unknown'));
+                result.innerHTML = '<div class="status ok">🟢 Camera active — point at barcode</div>';
+
+                // Start scanning frames
+                var canvas = document.getElementById('work-canvas');
+                var ctx = canvas.getContext('2d');
+                var frameCount = 0;
+
+                directInterval = setInterval(function() {
+                    if (video.videoWidth === 0) return;
+                    frameCount++;
+
+                    if (frameCount % 25 === 0) {
+                        log('Direct scan frame ' + frameCount + '...');
+                    }
+
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0);
+
+                    // Convert to blob instead of dataURL (better for Safari)
+                    canvas.toBlob(function(blob) {
+                        if (!blob) return;
+                        var url = URL.createObjectURL(blob);
+                        var img = new Image();
+                        img.onload = function() {
+                            if (zxingReader) {
+                                zxingReader.decodeFromImage(img)
+                                    .then(function(res) {
+                                        var barcode = res.getText();
+                                        log('*** Direct FOUND: ' + barcode + ' ***');
+                                        result.innerHTML = '<div class="status ok big-result">✅ ' + barcode + '</div>' +
+                                            '<a href="/result/' + barcode + '">View Product →</a>';
+                                        stopDirectScan();
+                                        playBeep();
+                                    })
+                                    .catch(function() {})
+                                    .finally(function() { URL.revokeObjectURL(url); });
+                            }
+                        };
+                        img.src = url;
+                    }, 'image/jpeg', 0.9);
+                }, 300);
+
             }).catch(function(err) {
                 result.innerHTML = '<div class="status fail">❌ Camera error: ' + err.message + '</div>';
-                log('Camera FAILED: ' + err.message);
+                log('Direct camera error: ' + err.message);
             });
         }
 
-        // ============================
-        // TEST 3: Live ZXing Scan
-        // ============================
-        function startZXingScan() {
-            var result = document.getElementById('scan-result');
-
-            if (!videoStream) {
-                result.innerHTML = '<div class="status fail">❌ Start camera first (Test 2)</div>';
-                return;
+        function stopDirectScan() {
+            if (directInterval) {
+                clearInterval(directInterval);
+                directInterval = null;
             }
-
-            result.innerHTML = '<div class="status info">🔍 Scanning... hold barcode 4-6 inches from camera, keep steady</div>';
-            log('Starting ZXing live scan...');
-
-            var video = document.getElementById('test-video');
-            var canvas = document.getElementById('test-canvas');
-            var ctx = canvas.getContext('2d');
-            var scanCount = 0;
-
-            scanInterval = setInterval(function() {
-                if (video.videoWidth === 0) return;
-                scanCount++;
-
-                if (scanCount % 25 === 0) {
-                    log('Frame ' + scanCount + '...');
-                }
-
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0);
-
-                // Try full frame
-                var fullImg = new Image();
-                fullImg.onload = function() {
-                    zxingReader.decodeFromImage(fullImg)
-                        .then(function(res) {
-                            var barcode = res.getText();
-                            log('*** FOUND: ' + barcode + ' ***');
-                            result.innerHTML = '<div class="status ok big-result">✅ ' + barcode + '</div>' +
-                                '<a href="/result/' + barcode + '">View Product →</a>';
-                            stopAllScans();
-                            playBeep();
-                        })
-                        .catch(function() {
-                            // Try center crop every 3rd frame
-                            if (scanCount % 3 === 0) {
-                                tryCenterCrop(canvas, ctx, result);
-                            }
-                            // Try B&W every 5th frame
-                            if (scanCount % 5 === 0) {
-                                tryBWScan(canvas, ctx, result);
-                            }
-                        });
-                };
-                fullImg.src = canvas.toDataURL('image/png');
-            }, 200);
-        }
-
-        function tryCenterCrop(canvas, ctx, result) {
-            var cw = Math.floor(canvas.width * 0.7);
-            var ch = Math.floor(canvas.height * 0.4);
-            var cx = Math.floor((canvas.width - cw) / 2);
-            var cy = Math.floor((canvas.height - ch) / 2);
-
-            var cropCanvas = document.createElement('canvas');
-            cropCanvas.width = cw;
-            cropCanvas.height = ch;
-            cropCanvas.getContext('2d').drawImage(canvas, cx, cy, cw, ch, 0, 0, cw, ch);
-
-            var cropImg = new Image();
-            cropImg.onload = function() {
-                zxingReader.decodeFromImage(cropImg)
-                    .then(function(res) {
-                        var barcode = res.getText();
-                        log('*** FOUND (center crop): ' + barcode + ' ***');
-                        result.innerHTML = '<div class="status ok big-result">✅ ' + barcode + '</div>' +
-                            '<a href="/result/' + barcode + '">View Product →</a>';
-                        stopAllScans();
-                        playBeep();
-                    }).catch(function() {});
-            };
-            cropImg.src = cropCanvas.toDataURL('image/png');
-        }
-
-        function tryBWScan(canvas, ctx, result) {
-            var bwCanvas = document.createElement('canvas');
-            bwCanvas.width = canvas.width;
-            bwCanvas.height = canvas.height;
-            var bwCtx = bwCanvas.getContext('2d');
-            bwCtx.drawImage(canvas, 0, 0);
-
-            try {
-                var imageData = bwCtx.getImageData(0, 0, bwCanvas.width, bwCanvas.height);
-                var data = imageData.data;
-                for (var i = 0; i < data.length; i += 4) {
-                    var gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
-                    var bw = gray > 110 ? 255 : 0;
-                    data[i] = bw; data[i+1] = bw; data[i+2] = bw;
-                }
-                bwCtx.putImageData(imageData, 0, 0);
-
-                var bwImg = new Image();
-                bwImg.onload = function() {
-                    zxingReader.decodeFromImage(bwImg)
-                        .then(function(res) {
-                            var barcode = res.getText();
-                            log('*** FOUND (B&W): ' + barcode + ' ***');
-                            result.innerHTML = '<div class="status ok big-result">✅ ' + barcode + '</div>' +
-                                '<a href="/result/' + barcode + '">View Product →</a>';
-                            stopAllScans();
-                            playBeep();
-                        }).catch(function() {});
-                };
-                bwImg.src = bwCanvas.toDataURL('image/png');
-            } catch(e) {}
-        }
-
-        function playBeep() {
-            try {
-                var ac = new (window.AudioContext || window.webkitAudioContext)();
-                var o = ac.createOscillator();
-                var g = ac.createGain();
-                o.connect(g); g.connect(ac.destination);
-                o.frequency.value = 800; g.gain.value = 0.3;
-                o.start(); setTimeout(function() { o.stop(); }, 200);
-            } catch(e) {}
-        }
-
-        function stopAllScans() {
-            if (scanInterval) {
-                clearInterval(scanInterval);
-                scanInterval = null;
-                log('Scanning stopped');
+            if (directStream) {
+                directStream.getTracks().forEach(function(t) { t.stop(); });
+                directStream = null;
             }
+            log('Direct scan stopped');
         }
 
         // ============================
-        // TEST 4: Image Scan
+        // 4. Photo Upload Scan
         // ============================
-        function testImageScan(event) {
+        function scanPhoto(event) {
             var file = event.target.files[0];
             if (!file) return;
 
-            var result = document.getElementById('image-result');
-            result.innerHTML = '<div class="status info">Scanning image with multiple methods...</div>';
-            log('Image: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)');
+            var result = document.getElementById('photo-result');
+            result.innerHTML = '<div class="status info">Scanning photo...</div>';
+            log('Photo: ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)');
 
-            var previewDiv = document.getElementById('image-preview');
-            var previewImg = document.getElementById('preview-img');
-            previewImg.src = URL.createObjectURL(file);
-            previewDiv.style.display = 'block';
+            document.getElementById('photo-img').src = URL.createObjectURL(file);
+            document.getElementById('photo-preview').style.display = 'block';
 
-            lastImage = new Image();
-            lastImage.onload = function() {
-                log('Size: ' + lastImage.width + 'x' + lastImage.height);
+            lastPhotoImage = new Image();
+            lastPhotoImage.onload = function() {
+                var img = lastPhotoImage;
+                log('Photo size: ' + img.width + 'x' + img.height);
 
-                // Method 1: ZXing full
-                log('Method 1: ZXing full image...');
-                zxingReader.decodeFromImage(lastImage)
-                    .then(function(res) {
-                        showImageResult(res.getText(), 'ZXing full', result);
-                    })
-                    .catch(function() {
-                        log('Method 1 failed');
+                var methods = [];
+                var currentMethod = 0;
 
-                        // Method 2: B&W enhanced
-                        log('Method 2: B&W enhanced...');
-                        tryEnhancedScan(lastImage, file, result);
-                    });
-            };
-            lastImage.src = URL.createObjectURL(file);
-        }
-
-        function tryEnhancedScan(img, file, result) {
-            var canvas = document.getElementById('test-canvas');
-            var ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            try {
-                var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                var data = imageData.data;
-                for (var i = 0; i < data.length; i += 4) {
-                    var gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-                    var bw = gray > 100 ? 255 : 0;
-                    data[i] = bw; data[i + 1] = bw; data[i + 2] = bw;
-                }
-                ctx.putImageData(imageData, 0, 0);
-
-                var enhImg = new Image();
-                enhImg.onload = function() {
-                    zxingReader.decodeFromImage(enhImg)
-                        .then(function(res) {
-                            showImageResult(res.getText(), 'B&W enhanced', result);
+                // Method 1: html5-qrcode scanFile
+                methods.push(function(next) {
+                    log('Try: html5-qrcode scanFile...');
+                    var tempDiv = document.getElementById('h5qr-temp');
+                    if (!tempDiv) {
+                        tempDiv = document.createElement('div');
+                        tempDiv.id = 'h5qr-temp';
+                        tempDiv.style.display = 'none';
+                        document.body.appendChild(tempDiv);
+                    }
+                    var scanner = new Html5Qrcode("h5qr-temp");
+                    scanner.scanFile(file, false)
+                        .then(function(text) {
+                            showPhotoResult(text, 'html5-qrcode');
                         })
-                        .catch(function() {
-                            log('Method 2 failed');
-
-                            // Method 3: html5-qrcode
-                            log('Method 3: html5-qrcode...');
-                            var tempDiv = document.getElementById('h5qr-temp');
-                            if (!tempDiv) {
-                                tempDiv = document.createElement('div');
-                                tempDiv.id = 'h5qr-temp';
-                                tempDiv.style.display = 'none';
-                                document.body.appendChild(tempDiv);
-                            }
-                            var scanner = new Html5Qrcode("h5qr-temp");
-                            scanner.scanFile(file, false)
-                                .then(function(text) {
-                                    showImageResult(text, 'html5-qrcode', result);
-                                })
-                                .catch(function() {
-                                    log('Method 3 failed');
-                                    log('Method 4: Scanning 12 regions...');
-                                    scanImageRegions(img, result);
-                                });
+                        .catch(function(err) {
+                            log('html5-qrcode failed: ' + err);
+                            next();
                         });
-                };
-                enhImg.src = canvas.toDataURL();
-            } catch(e) {
-                log('Enhancement error: ' + e);
-                result.innerHTML = '<div class="status fail">❌ All methods failed</div>';
-            }
+                });
+
+                // Method 2: ZXing full image
+                methods.push(function(next) {
+                    if (!zxingReader) { next(); return; }
+                    log('Try: ZXing full image...');
+                    zxingReader.decodeFromImage(img)
+                        .then(function(res) {
+                            showPhotoResult(res.getText(), 'ZXing');
+                        })
+                        .catch(function(err) {
+                            log('ZXing failed: ' + err);
+                            next();
+                        });
+                });
+
+                // Method 3: ZXing with B&W enhancement
+                methods.push(function(next) {
+                    if (!zxingReader) { next(); return; }
+                    log('Try: ZXing B&W enhanced...');
+                    var canvas = document.getElementById('work-canvas');
+                    var ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    try {
+                        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        var data = imageData.data;
+                        for (var i = 0; i < data.length; i += 4) {
+                            var gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                            data[i] = data[i + 1] = data[i + 2] = gray > 100 ? 255 : 0;
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+
+                        canvas.toBlob(function(blob) {
+                            if (!blob) { next(); return; }
+                            var url = URL.createObjectURL(blob);
+                            var bwImg = new Image();
+                            bwImg.onload = function() {
+                                zxingReader.decodeFromImage(bwImg)
+                                    .then(function(res) {
+                                        showPhotoResult(res.getText(), 'ZXing B&W');
+                                    })
+                                    .catch(function() {
+                                        log('B&W failed');
+                                        URL.revokeObjectURL(url);
+                                        next();
+                                    });
+                            };
+                            bwImg.src = url;
+                        }, 'image/png');
+                    } catch(e) {
+                        log('B&W error: ' + e);
+                        next();
+                    }
+                });
+
+                // Method 4: Scan 12 regions
+                methods.push(function(next) {
+                    log('Try: Scanning regions...');
+                    scanPhotoRegions(img, function(found, barcode) {
+                        if (found) {
+                            showPhotoResult(barcode, 'region scan');
+                        } else {
+                            log('All methods exhausted');
+                            result.innerHTML = '<div class="status fail">❌ Could not detect barcode.<br><br>' +
+                                '<strong>Tips:</strong><br>' +
+                                '• Take photo VERY close to barcode only<br>' +
+                                '• Good lighting, no shadows<br>' +
+                                '• Barcode should be sharp, not blurry<br>' +
+                                '• Try the Camera Scanner (Test 2) instead</div>';
+                        }
+                    });
+                });
+
+                // Run methods in sequence
+                function runNext() {
+                    if (currentMethod >= methods.length) return;
+                    methods[currentMethod](function() {
+                        currentMethod++;
+                        runNext();
+                    });
+                }
+                runNext();
+            };
+            lastPhotoImage.src = URL.createObjectURL(file);
         }
 
-        function showImageResult(barcode, method, resultDiv) {
-            log('*** FOUND by ' + method + ': ' + barcode + ' ***');
-            resultDiv.innerHTML = '<div class="status ok big-result">✅ ' + barcode + '</div>' +
+        function showPhotoResult(barcode, method) {
+            var result = document.getElementById('photo-result');
+            log('*** PHOTO FOUND by ' + method + ': ' + barcode + ' ***');
+            result.innerHTML = '<div class="status ok big-result">✅ ' + barcode + '</div>' +
                 '<small>Found by: ' + method + '</small><br>' +
                 '<a href="/result/' + barcode + '" style="font-size:18px; color:blue;">View Product →</a>';
             playBeep();
         }
 
-        // ============================
-        // TEST 5: Scan Regions
-        // ============================
-        function scanImageRegions(img, resultDiv) {
-            if (!img) {
-                if (!lastImage) {
-                    var r = document.getElementById('region-result');
-                    r.innerHTML = '<div class="status fail">❌ Upload an image first</div>';
-                    return;
-                }
-                img = lastImage;
-                resultDiv = document.getElementById('region-result');
-            }
+        function scanPhotoRegions(img, callback) {
+            if (!zxingReader) { callback(false, null); return; }
 
-            var canvas = document.getElementById('test-canvas');
+            var canvas = document.getElementById('work-canvas');
             var ctx = canvas.getContext('2d');
 
             var regions = [
-                { name: 'bottom-half', x: 0, y: 0.5, w: 1.0, h: 0.5 },
-                { name: 'bottom-third', x: 0, y: 0.65, w: 1.0, h: 0.35 },
-                { name: 'top-half', x: 0, y: 0, w: 1.0, h: 0.5 },
-                { name: 'center', x: 0.1, y: 0.2, w: 0.8, h: 0.6 },
-                { name: 'center-bottom', x: 0.1, y: 0.4, w: 0.8, h: 0.5 },
-                { name: 'left-half', x: 0, y: 0, w: 0.5, h: 1.0 },
-                { name: 'right-half', x: 0.5, y: 0, w: 0.5, h: 1.0 },
-                { name: 'bottom-left', x: 0, y: 0.5, w: 0.5, h: 0.5 },
-                { name: 'bottom-right', x: 0.5, y: 0.5, w: 0.5, h: 0.5 },
-                { name: 'center-strip', x: 0, y: 0.3, w: 1.0, h: 0.4 },
-                { name: 'wide-center', x: 0.05, y: 0.25, w: 0.9, h: 0.5 },
-                { name: 'bottom-strip', x: 0, y: 0.6, w: 1.0, h: 0.3 }
+                { x: 0, y: 0.5, w: 1.0, h: 0.5 },
+                { x: 0, y: 0.65, w: 1.0, h: 0.35 },
+                { x: 0, y: 0, w: 1.0, h: 0.5 },
+                { x: 0.1, y: 0.2, w: 0.8, h: 0.6 },
+                { x: 0.1, y: 0.4, w: 0.8, h: 0.5 },
+                { x: 0, y: 0, w: 0.5, h: 1.0 },
+                { x: 0.5, y: 0, w: 0.5, h: 1.0 },
+                { x: 0, y: 0.5, w: 0.5, h: 0.5 },
+                { x: 0.5, y: 0.5, w: 0.5, h: 0.5 },
+                { x: 0, y: 0.3, w: 1.0, h: 0.4 },
+                { x: 0.05, y: 0.25, w: 0.9, h: 0.5 },
+                { x: 0, y: 0.6, w: 1.0, h: 0.3 }
             ];
 
             var idx = 0;
-            var found = false;
 
-            resultDiv.innerHTML = '<div class="status info">Scanning ' + regions.length + ' regions...</div>';
-
-            function tryRegion() {
-                if (idx >= regions.length || found) {
-                    if (!found) {
-                        log('All regions failed');
-                        resultDiv.innerHTML = '<div class="status fail">❌ Could not find barcode.<br>Take a CLOSER photo of just the barcode lines.</div>';
-                    }
+            function tryNext() {
+                if (idx >= regions.length) {
+                    callback(false, null);
                     return;
                 }
 
@@ -460,44 +473,53 @@
                 canvas.height = sh;
                 ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
-                // B&W enhancement
                 try {
                     var imageData = ctx.getImageData(0, 0, sw, sh);
                     var data = imageData.data;
                     for (var i = 0; i < data.length; i += 4) {
                         var gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-                        var bw = gray > 110 ? 255 : 0;
-                        data[i] = bw; data[i + 1] = bw; data[i + 2] = bw;
+                        data[i] = data[i + 1] = data[i + 2] = gray > 110 ? 255 : 0;
                     }
                     ctx.putImageData(imageData, 0, 0);
                 } catch(e) {}
 
-                var regionImg = new Image();
-                regionImg.onload = function() {
-                    zxingReader.decodeFromImage(regionImg)
-                        .then(function(res) {
-                            found = true;
-                            showImageResult(res.getText(), 'region: ' + r.name, resultDiv);
-                        })
-                        .catch(function() {
-                            log('Region "' + r.name + '" — nothing');
-                            idx++;
-                            tryRegion();
-                        });
-                };
-                regionImg.src = canvas.toDataURL();
+                canvas.toBlob(function(blob) {
+                    if (!blob) { idx++; tryNext(); return; }
+                    var url = URL.createObjectURL(blob);
+                    var rImg = new Image();
+                    rImg.onload = function() {
+                        zxingReader.decodeFromImage(rImg)
+                            .then(function(res) {
+                                URL.revokeObjectURL(url);
+                                callback(true, res.getText());
+                            })
+                            .catch(function() {
+                                URL.revokeObjectURL(url);
+                                idx++;
+                                tryNext();
+                            });
+                    };
+                    rImg.src = url;
+                }, 'image/png');
             }
 
-            tryRegion();
+            tryNext();
         }
 
-        function scanRegions() {
-            scanImageRegions(null, null);
+        function playBeep() {
+            try {
+                var ac = new (window.AudioContext || window.webkitAudioContext)();
+                var o = ac.createOscillator();
+                var g = ac.createGain();
+                o.connect(g); g.connect(ac.destination);
+                o.frequency.value = 800; g.gain.value = 0.3;
+                o.start(); setTimeout(function() { o.stop(); }, 200);
+            } catch(e) {}
         }
 
         window.addEventListener('beforeunload', function() {
-            stopAllScans();
-            if (videoStream) videoStream.getTracks().forEach(function(t) { t.stop(); });
+            stopHtml5QrScan();
+            stopDirectScan();
         });
     </script>
 </body>
