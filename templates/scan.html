@@ -9,75 +9,69 @@
             
             <div class="text-center mb-4">
                 <h2>🔍 Scan Product Barcode</h2>
-                <p class="text-muted">Use your camera, upload an image, or enter barcode manually</p>
+                <p class="text-muted">Scan, upload, or enter barcode manually</p>
             </div>
 
-            <!-- Tabs -->
             <ul class="nav nav-tabs nav-fill mb-4" id="scanTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="camera-tab" data-bs-toggle="tab" 
-                            data-bs-target="#camera-panel" type="button" role="tab">
-                        📷 Camera
-                    </button>
+                            data-bs-target="#camera-panel" type="button" role="tab">📷 Camera</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="upload-tab" data-bs-toggle="tab" 
-                            data-bs-target="#upload-panel" type="button" role="tab">
-                        📤 Upload
-                    </button>
+                            data-bs-target="#upload-panel" type="button" role="tab">📤 Upload</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="manual-tab" data-bs-toggle="tab" 
-                            data-bs-target="#manual-panel" type="button" role="tab">
-                        ⌨️ Manual
-                    </button>
+                            data-bs-target="#manual-panel" type="button" role="tab">⌨️ Manual</button>
                 </li>
             </ul>
 
-            <!-- Tab Content -->
             <div class="tab-content" id="scanTabContent">
                 
                 <!-- CAMERA TAB -->
                 <div class="tab-pane fade show active" id="camera-panel" role="tabpanel">
                     <div class="card shadow-sm">
-                        <div class="card-body text-center">
+                        <div class="card-body text-center p-2">
                             
-                            <div id="reader" style="width: 100%; max-width: 600px; margin: 0 auto;"></div>
-                            
-                            <div id="camera-status" class="mt-3">
-                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                <span class="ms-2">Initializing camera...</span>
+                            <!-- QuaggaJS scanner viewport -->
+                            <div id="scanner-container" style="position: relative; width: 100%; max-width: 600px; margin: 0 auto; overflow: hidden; border-radius: 12px; background: #000;">
+                                <div id="interactive" class="viewport" style="width: 100%; height: 350px;"></div>
+                                <!-- Scanning line animation -->
+                                <div id="scan-line" style="position: absolute; top: 40%; left: 5%; right: 5%; height: 3px; background: #00ff00; box-shadow: 0 0 10px #00ff00; display: none; animation: scanMove 2s ease-in-out infinite;"></div>
+                                <!-- Scan area guide -->
+                                <div id="scan-guide" style="position: absolute; top: 25%; left: 5%; right: 5%; bottom: 25%; border: 2px solid rgba(0,255,0,0.5); border-radius: 8px; display: none;"></div>
                             </div>
 
-                            <div id="scan-success" class="alert alert-success mt-3" style="display: none;">
-                                <strong>✅ Barcode Detected!</strong>
-                                <br>
-                                <span id="detected-barcode" class="fs-4 fw-bold"></span>
-                                <br>
-                                <span class="text-muted" id="detected-format"></span>
-                                <br>
-                                <span class="text-muted">Redirecting to product page...</span>
-                            </div>
-
-                            <div id="scan-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                            <style>
+                                #interactive video { width: 100% !important; height: 350px !important; object-fit: cover; }
+                                #interactive canvas { display: none !important; }
+                                @keyframes scanMove {
+                                    0%, 100% { top: 30%; }
+                                    50% { top: 60%; }
+                                }
+                            </style>
                             
-                            <div class="mt-3">
-                                <button id="btn-start-camera" class="btn btn-success btn-lg me-2" onclick="startScanner()">
-                                    ▶️ Start Camera
-                                </button>
-                                <button id="btn-stop-camera" class="btn btn-danger btn-lg" onclick="stopScanner()" style="display: none;">
-                                    ⏹️ Stop Camera
-                                </button>
+                            <div id="camera-status" class="mt-2">
+                                <span class="text-muted">Tap Start Camera to begin</span>
                             </div>
 
-                            <div class="mt-3 p-3 bg-light rounded">
+                            <div id="scan-success" class="alert alert-success mt-2" style="display: none;">
+                                <strong>✅ Barcode Detected!</strong><br>
+                                <span id="detected-barcode" class="fs-4 fw-bold"></span><br>
+                                <span class="text-muted">Redirecting...</span>
+                            </div>
+
+                            <div id="scan-error" class="alert alert-danger mt-2" style="display: none;"></div>
+                            
+                            <div class="mt-2">
+                                <button id="btn-start" class="btn btn-success btn-lg me-2" onclick="startScanner()">▶️ Start Camera</button>
+                                <button id="btn-stop" class="btn btn-danger btn-lg" onclick="stopScanner()" style="display: none;">⏹️ Stop</button>
+                            </div>
+
+                            <div class="mt-2 p-2 bg-light rounded">
                                 <small class="text-muted">
-                                    <strong>📱 Scanning Tips:</strong><br>
-                                    📏 Hold barcode 4-8 inches from camera<br>
-                                    💡 Good lighting — no shadows on barcode<br>
-                                    🎯 Fit barcode inside the scanning box<br>
-                                    ✋ Hold very steady for 3-5 seconds<br>
-                                    🔄 Slowly move closer if not detecting
+                                    📱 Point at barcode and hold steady. Works from normal distance.
                                 </small>
                             </div>
                         </div>
@@ -90,18 +84,11 @@
                         <div class="card-body text-center">
                             <h5 class="mb-3">📤 Upload Barcode Image</h5>
                             
-                            <div class="alert alert-info">
-                                <strong>📸 For best results:</strong><br>
-                                • Use a clear, close-up photo of the barcode<br>
-                                • Good lighting, no shadows or blur<br>
-                                • Barcode should be the main focus of the photo
-                            </div>
-
                             <label class="btn btn-primary btn-lg w-100 py-3" for="gallery-upload">
                                 🖼️ Choose Photo from Gallery
                             </label>
                             <input type="file" id="gallery-upload" class="d-none" 
-                                   accept="image/png,image/jpeg,image/jpg,image/webp" 
+                                   accept="image/*" 
                                    onchange="handleUpload(event)">
                             
                             <div id="upload-preview" class="mb-3 mt-3" style="display: none;">
@@ -115,110 +102,159 @@
                     </div>
                 </div>
 
-                <!-- MANUAL ENTRY TAB -->
+                <!-- MANUAL TAB -->
                 <div class="tab-pane fade" id="manual-panel" role="tabpanel">
                     <div class="card shadow-sm">
                         <div class="card-body">
                             <h5 class="text-center mb-3">⌨️ Enter Barcode Number</h5>
-                            <p class="text-muted text-center">Type the number printed below the barcode lines</p>
                             
                             <div class="input-group input-group-lg mb-3">
                                 <input type="text" id="manual-barcode" class="form-control" 
                                        placeholder="e.g., 8901058851854" 
-                                       maxlength="13" pattern="[0-9]*" inputmode="numeric"
+                                       maxlength="13" inputmode="numeric"
                                        onkeypress="if(event.key === 'Enter') lookupManualBarcode();">
-                                <button class="btn btn-primary" onclick="lookupManualBarcode()">
-                                    🔍 Search
-                                </button>
+                                <button class="btn btn-primary" onclick="lookupManualBarcode()">🔍 Search</button>
                             </div>
 
                             <div id="manual-result" class="mt-3" style="display: none;"></div>
 
                             <div class="mt-4">
-                                <h6>🧪 Try Sample Barcodes:</h6>
+                                <h6>🧪 Sample Barcodes:</h6>
                                 <div class="row g-2 mt-2">
-                                    <div class="col-6 col-md-4">
-                                        <button class="btn btn-outline-secondary btn-sm w-100" 
-                                                onclick="fillBarcode('8901058851854')">Parle-G Gold</button>
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                        <button class="btn btn-outline-secondary btn-sm w-100" 
-                                                onclick="fillBarcode('8901262150255')">Maggi Noodles</button>
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                        <button class="btn btn-outline-secondary btn-sm w-100" 
-                                                onclick="fillBarcode('8901790753456')">Crocin 500mg</button>
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                        <button class="btn btn-outline-secondary btn-sm w-100" 
-                                                onclick="fillBarcode('8901689152012')">Himalaya Ashvagandha</button>
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                        <button class="btn btn-outline-secondary btn-sm w-100" 
-                                                onclick="fillBarcode('8901030697289')">Lakme SPF 50</button>
-                                    </div>
-                                    <div class="col-6 col-md-4">
-                                        <button class="btn btn-outline-secondary btn-sm w-100" 
-                                                onclick="fillBarcode('8901030718960')">Dove Shampoo</button>
-                                    </div>
+                                    <div class="col-6 col-md-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="fillBarcode('8901058851854')">Parle-G Gold</button></div>
+                                    <div class="col-6 col-md-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="fillBarcode('8901262150255')">Maggi Noodles</button></div>
+                                    <div class="col-6 col-md-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="fillBarcode('8901790753456')">Crocin 500mg</button></div>
+                                    <div class="col-6 col-md-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="fillBarcode('8901689152012')">Himalaya Ashvagandha</button></div>
+                                    <div class="col-6 col-md-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="fillBarcode('8901030697289')">Lakme SPF 50</button></div>
+                                    <div class="col-6 col-md-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="fillBarcode('8901030718960')">Dove Shampoo</button></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
-<!-- Hidden elements for scanning -->
 <div id="upload-temp-reader" style="display: none;"></div>
 <canvas id="work-canvas" style="display: none;"></canvas>
 {% endblock %}
 
 {% block extra_js %}
-<!-- html5-qrcode — proven working on iPhone 14 Safari -->
+<!-- QuaggaJS — FAST barcode scanner optimized for linear barcodes -->
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<!-- html5-qrcode as backup for file scanning -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<!-- ZXing — for enhanced image scanning -->
-<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 
 <script>
-    var html5QrCode = null;
     var isScanning = false;
-    var zxingReader = null;
-
-    // Initialize ZXing for image scanning
-    try {
-        if (typeof ZXing !== 'undefined') {
-            zxingReader = new ZXing.BrowserMultiFormatReader();
-        }
-    } catch(e) {}
+    var lastDetected = '';
+    var detectionCount = 0;
+    var REQUIRED_DETECTIONS = 2;
 
     // ============================================================
-    // CAMERA SCANNER — html5-qrcode (proven on iPhone Safari)
+    // CAMERA SCANNER using QuaggaJS — FAST, works from DISTANCE
     // ============================================================
     function startScanner() {
         var statusDiv = document.getElementById('camera-status');
         var successDiv = document.getElementById('scan-success');
         var errorDiv = document.getElementById('scan-error');
-        
+
         successDiv.style.display = 'none';
         errorDiv.style.display = 'none';
         statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> Starting camera...';
-        statusDiv.style.display = 'block';
         
-        document.getElementById('btn-start-camera').style.display = 'none';
-        document.getElementById('btn-stop-camera').style.display = 'inline-block';
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-stop').style.display = 'inline-block';
 
-        html5QrCode = new Html5Qrcode("reader");
+        lastDetected = '';
+        detectionCount = 0;
 
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#interactive'),
+                constraints: {
+                    facingMode: "environment",
+                    width: { min: 1280, ideal: 1920 },
+                    height: { min: 720, ideal: 1080 },
+                    aspectRatio: { ideal: 1.7778 }
+                },
+                area: {
+                    top: "20%",
+                    right: "5%",
+                    left: "5%",
+                    bottom: "20%"
+                }
+            },
+            locator: {
+                patchSize: "medium",
+                halfSample: true
+            },
+            numOfWorkers: navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 4) : 2,
+            frequency: 20,
+            decoder: {
+                readers: [
+                    "ean_reader",
+                    "ean_8_reader",
+                    "upc_reader",
+                    "upc_e_reader",
+                    "code_128_reader",
+                    "code_39_reader"
+                ],
+                multiple: false
+            },
+            locate: true
+        }, function(err) {
+            if (err) {
+                console.error('Quagga init error:', err);
+                // Fallback to html5-qrcode
+                startHtml5QrCodeFallback();
+                return;
+            }
+
+            Quagga.start();
+            isScanning = true;
+
+            document.getElementById('scan-line').style.display = 'block';
+            document.getElementById('scan-guide').style.display = 'block';
+
+            statusDiv.innerHTML = '🟢 <span class="text-success"><strong>Camera active</strong> — point at any barcode</span>';
+        });
+
+        // Listen for barcode detection
+        Quagga.onDetected(function(result) {
+            if (!isScanning) return;
+
+            var code = result.codeResult.code;
+            var format = result.codeResult.format;
+
+            // Require same barcode detected twice for accuracy
+            if (code === lastDetected) {
+                detectionCount++;
+            } else {
+                lastDetected = code;
+                detectionCount = 1;
+            }
+
+            if (detectionCount >= REQUIRED_DETECTIONS) {
+                onBarcodeFound(code, format);
+            }
+        });
+    }
+
+    // Fallback scanner if QuaggaJS fails
+    function startHtml5QrCodeFallback() {
+        var statusDiv = document.getElementById('camera-status');
+        statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> Starting backup scanner...';
+
+        var scanner = new Html5Qrcode("interactive");
         var config = {
-            fps: 10,
-            qrbox: function(viewfinderWidth, viewfinderHeight) {
-                var w = Math.floor(viewfinderWidth * 0.85);
-                var h = Math.floor(w * 0.4);
-                return { width: w, height: h };
+            fps: 15,
+            qrbox: function(vw, vh) {
+                return { width: Math.floor(vw * 0.85), height: Math.floor(vh * 0.45) };
             },
             formatsToSupport: [
                 Html5QrcodeSupportedFormats.EAN_13,
@@ -226,315 +262,37 @@
                 Html5QrcodeSupportedFormats.UPC_A,
                 Html5QrcodeSupportedFormats.UPC_E,
                 Html5QrcodeSupportedFormats.CODE_128,
-                Html5QrcodeSupportedFormats.CODE_39,
                 Html5QrcodeSupportedFormats.QR_CODE
-            ],
-            experimentalFeatures: {
-                useBarCodeDetectorIfSupported: false
-            }
+            ]
         };
 
-        html5QrCode.start(
+        scanner.start(
             { facingMode: "environment" },
             config,
-            onCameraScanSuccess,
+            function(text, result) {
+                onBarcodeFound(text, result.result.format.formatName);
+                scanner.stop().catch(function() {});
+            },
             function() {}
         ).then(function() {
             isScanning = true;
-            statusDiv.innerHTML = '🟢 <span class="text-success">Camera active — point at a barcode and hold steady</span>';
+            statusDiv.innerHTML = '🟢 <span class="text-success">Camera active — point at barcode</span>';
         }).catch(function(err) {
-            html5QrCode.start(
-                { facingMode: "user" },
-                config,
-                onCameraScanSuccess,
-                function() {}
-            ).then(function() {
-                isScanning = true;
-                statusDiv.innerHTML = '🟢 <span class="text-success">Camera active (front) — point at a barcode</span>';
-            }).catch(function(err2) {
-                errorDiv.innerHTML = '<strong>❌ Camera Error</strong><br>' +
-                    'Could not access camera.<br>' +
-                    'Allow camera permission and try again.<br>' +
-                    '<button class="btn btn-primary btn-sm mt-2" onclick="startScanner()">🔄 Retry</button>';
-                errorDiv.style.display = 'block';
-                statusDiv.style.display = 'none';
-                document.getElementById('btn-start-camera').style.display = 'inline-block';
-                document.getElementById('btn-stop-camera').style.display = 'none';
-            });
+            statusDiv.innerHTML = '❌ Camera failed: ' + err;
+            document.getElementById('btn-start').style.display = 'inline-block';
+            document.getElementById('btn-stop').style.display = 'none';
         });
     }
 
-    function onCameraScanSuccess(decodedText, decodedResult) {
+    function onBarcodeFound(code, format) {
+        isScanning = false;
         stopScanner();
 
-        var successDiv = document.getElementById('scan-success');
-        var statusDiv = document.getElementById('camera-status');
-
-        document.getElementById('detected-barcode').textContent = decodedText;
-        document.getElementById('detected-format').textContent = 
-            'Format: ' + decodedResult.result.format.formatName;
-        successDiv.style.display = 'block';
-        statusDiv.style.display = 'none';
-
-        try {
-            var ac = new (window.AudioContext || window.webkitAudioContext)();
-            var o = ac.createOscillator();
-            var g = ac.createGain();
-            o.connect(g); g.connect(ac.destination);
-            o.frequency.value = 800; g.gain.value = 0.2;
-            o.start(); setTimeout(function() { o.stop(); }, 150);
-        } catch(e) {}
-
-        setTimeout(function() {
-            window.location.href = '/result/' + encodeURIComponent(decodedText);
-        }, 1000);
-    }
-
-    function stopScanner() {
-        if (html5QrCode && isScanning) {
-            html5QrCode.stop().then(function() {
-                isScanning = false;
-                document.getElementById('camera-status').innerHTML = '⏸️ Camera stopped';
-                document.getElementById('btn-start-camera').style.display = 'inline-block';
-                document.getElementById('btn-stop-camera').style.display = 'none';
-            }).catch(function(err) {
-                isScanning = false;
-            });
-        }
-    }
-
-    // ============================================================
-    // UPLOAD SCANNER — tries 5 methods to find barcode
-    // ============================================================
-    function handleUpload(event) {
-        var file = event.target.files[0];
-        if (!file) return;
-
-        var previewDiv = document.getElementById('upload-preview');
-        var previewImg = document.getElementById('preview-image');
-        var statusDiv = document.getElementById('upload-status');
-        var resultDiv = document.getElementById('upload-result');
-        
-        previewImg.src = URL.createObjectURL(file);
-        previewDiv.style.display = 'block';
-        
-        statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <strong>Scanning barcode...</strong><br><small>Trying multiple detection methods...</small>';
-        statusDiv.className = 'mt-3 alert alert-info';
-        statusDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-
-        var img = new Image();
-        img.onload = function() {
-            var methods = [];
-            var currentMethod = 0;
-
-            // Method 1: html5-qrcode scanFile
-            methods.push(function(next) {
-                try {
-                    var scanner = new Html5Qrcode("upload-temp-reader");
-                    scanner.scanFile(file, false)
-                        .then(function(text) {
-                            showUploadResult(text, statusDiv, resultDiv);
-                        })
-                        .catch(function() { next(); });
-                } catch(e) { next(); }
-            });
-
-            // Method 2: ZXing full image
-            methods.push(function(next) {
-                if (!zxingReader) { next(); return; }
-                try {
-                    zxingReader.decodeFromImage(img)
-                        .then(function(res) {
-                            showUploadResult(res.getText(), statusDiv, resultDiv);
-                        })
-                        .catch(function() { next(); });
-                } catch(e) { next(); }
-            });
-
-            // Method 3: ZXing with B&W enhancement
-            methods.push(function(next) {
-                if (!zxingReader) { next(); return; }
-                try {
-                    var canvas = document.getElementById('work-canvas');
-                    var ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-
-                    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    var data = imageData.data;
-                    for (var i = 0; i < data.length; i += 4) {
-                        var gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
-                        data[i] = data[i+1] = data[i+2] = gray > 100 ? 255 : 0;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-
-                    canvas.toBlob(function(blob) {
-                        if (!blob) { next(); return; }
-                        var url = URL.createObjectURL(blob);
-                        var bwImg = new Image();
-                        bwImg.onload = function() {
-                            zxingReader.decodeFromImage(bwImg)
-                                .then(function(res) {
-                                    URL.revokeObjectURL(url);
-                                    showUploadResult(res.getText(), statusDiv, resultDiv);
-                                })
-                                .catch(function() {
-                                    URL.revokeObjectURL(url);
-                                    next();
-                                });
-                        };
-                        bwImg.src = url;
-                    }, 'image/png');
-                } catch(e) { next(); }
-            });
-
-            // Method 4: ZXing with different threshold
-            methods.push(function(next) {
-                if (!zxingReader) { next(); return; }
-                try {
-                    var canvas = document.getElementById('work-canvas');
-                    var ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-
-                    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    var data = imageData.data;
-                    for (var i = 0; i < data.length; i += 4) {
-                        var gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
-                        data[i] = data[i+1] = data[i+2] = gray > 140 ? 255 : 0;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-
-                    canvas.toBlob(function(blob) {
-                        if (!blob) { next(); return; }
-                        var url = URL.createObjectURL(blob);
-                        var bwImg = new Image();
-                        bwImg.onload = function() {
-                            zxingReader.decodeFromImage(bwImg)
-                                .then(function(res) {
-                                    URL.revokeObjectURL(url);
-                                    showUploadResult(res.getText(), statusDiv, resultDiv);
-                                })
-                                .catch(function() {
-                                    URL.revokeObjectURL(url);
-                                    next();
-                                });
-                        };
-                        bwImg.src = url;
-                    }, 'image/png');
-                } catch(e) { next(); }
-            });
-
-            // Method 5: Scan 12 different regions of the image
-            methods.push(function(next) {
-                if (!zxingReader) { next(); return; }
-                
-                var canvas = document.getElementById('work-canvas');
-                var ctx = canvas.getContext('2d');
-
-                var regions = [
-                    { x: 0, y: 0.5, w: 1.0, h: 0.5 },
-                    { x: 0, y: 0.65, w: 1.0, h: 0.35 },
-                    { x: 0, y: 0, w: 1.0, h: 0.5 },
-                    { x: 0.1, y: 0.2, w: 0.8, h: 0.6 },
-                    { x: 0.1, y: 0.4, w: 0.8, h: 0.5 },
-                    { x: 0, y: 0, w: 0.5, h: 1.0 },
-                    { x: 0.5, y: 0, w: 0.5, h: 1.0 },
-                    { x: 0, y: 0.5, w: 0.5, h: 0.5 },
-                    { x: 0.5, y: 0.5, w: 0.5, h: 0.5 },
-                    { x: 0, y: 0.3, w: 1.0, h: 0.4 },
-                    { x: 0.05, y: 0.25, w: 0.9, h: 0.5 },
-                    { x: 0, y: 0.6, w: 1.0, h: 0.3 }
-                ];
-
-                var rIdx = 0;
-
-                function tryNextRegion() {
-                    if (rIdx >= regions.length) {
-                        next();
-                        return;
-                    }
-
-                    var r = regions[rIdx];
-                    var sx = Math.floor(img.width * r.x);
-                    var sy = Math.floor(img.height * r.y);
-                    var sw = Math.floor(img.width * r.w);
-                    var sh = Math.floor(img.height * r.h);
-
-                    canvas.width = sw;
-                    canvas.height = sh;
-                    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-
-                    // Apply B&W
-                    try {
-                        var imageData = ctx.getImageData(0, 0, sw, sh);
-                        var data = imageData.data;
-                        for (var i = 0; i < data.length; i += 4) {
-                            var gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
-                            data[i] = data[i+1] = data[i+2] = gray > 110 ? 255 : 0;
-                        }
-                        ctx.putImageData(imageData, 0, 0);
-                    } catch(e) {}
-
-                    canvas.toBlob(function(blob) {
-                        if (!blob) { rIdx++; tryNextRegion(); return; }
-                        var url = URL.createObjectURL(blob);
-                        var regionImg = new Image();
-                        regionImg.onload = function() {
-                            zxingReader.decodeFromImage(regionImg)
-                                .then(function(res) {
-                                    URL.revokeObjectURL(url);
-                                    showUploadResult(res.getText(), statusDiv, resultDiv);
-                                })
-                                .catch(function() {
-                                    URL.revokeObjectURL(url);
-                                    rIdx++;
-                                    tryNextRegion();
-                                });
-                        };
-                        regionImg.src = url;
-                    }, 'image/png');
-                }
-
-                statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> Scanning different regions of the image...';
-                tryNextRegion();
-            });
-
-            // ALL METHODS FAILED
-            methods.push(function(next) {
-                statusDiv.style.display = 'none';
-                resultDiv.innerHTML = '❌ <strong>Could not detect barcode in this image.</strong><br><br>' +
-                    '<strong>Tips for better results:</strong><br>' +
-                    '📸 Use original photo (not WhatsApp/compressed)<br>' +
-                    '📏 Take photo VERY close to just the barcode<br>' +
-                    '💡 Good lighting, no shadows<br>' +
-                    '✋ Clear photo, no blur<br><br>' +
-                    '📷 <strong>Best option:</strong> Use the Camera tab for live scanning<br><br>' +
-                    '<button class="btn btn-primary btn-sm" onclick="document.getElementById(\'gallery-upload\').click()">🖼️ Try Another Photo</button>' +
-                    ' <button class="btn btn-outline-primary btn-sm" onclick="switchToCamera()">📷 Use Camera</button>' +
-                    ' <button class="btn btn-outline-secondary btn-sm" onclick="switchToManual()">⌨️ Enter Manually</button>';
-                resultDiv.className = 'mt-3 alert alert-warning';
-                resultDiv.style.display = 'block';
-            });
-
-            // Run methods in sequence
-            function runNext() {
-                if (currentMethod >= methods.length) return;
-                methods[currentMethod](function() {
-                    currentMethod++;
-                    runNext();
-                });
-            }
-            runNext();
-        };
-        img.src = URL.createObjectURL(file);
-    }
-
-    function showUploadResult(barcode, statusDiv, resultDiv) {
-        statusDiv.style.display = 'none';
+        document.getElementById('detected-barcode').textContent = code;
+        document.getElementById('scan-success').style.display = 'block';
+        document.getElementById('camera-status').style.display = 'none';
+        document.getElementById('scan-line').style.display = 'none';
+        document.getElementById('scan-guide').style.display = 'none';
 
         // Beep
         try {
@@ -542,18 +300,108 @@
             var o = ac.createOscillator();
             var g = ac.createGain();
             o.connect(g); g.connect(ac.destination);
+            o.frequency.value = 800; g.gain.value = 0.3;
+            o.start(); setTimeout(function() { o.stop(); }, 200);
+        } catch(e) {}
+
+        // Vibrate if supported
+        try { navigator.vibrate(200); } catch(e) {}
+
+        setTimeout(function() {
+            window.location.href = '/result/' + encodeURIComponent(code);
+        }, 600);
+    }
+
+    function stopScanner() {
+        try {
+            Quagga.stop();
+        } catch(e) {}
+        isScanning = false;
+        document.getElementById('scan-line').style.display = 'none';
+        document.getElementById('scan-guide').style.display = 'none';
+        document.getElementById('camera-status').innerHTML = '⏸️ Camera stopped';
+        document.getElementById('btn-start').style.display = 'inline-block';
+        document.getElementById('btn-stop').style.display = 'none';
+    }
+
+    // ============================================================
+    // UPLOAD — sends to SERVER for Python scanning
+    // ============================================================
+    function handleUpload(event) {
+        var file = event.target.files[0];
+        if (!file) return;
+
+        var previewImg = document.getElementById('preview-image');
+        var statusDiv = document.getElementById('upload-status');
+        var resultDiv = document.getElementById('upload-result');
+
+        previewImg.src = URL.createObjectURL(file);
+        document.getElementById('upload-preview').style.display = 'block';
+
+        statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <strong>Scanning...</strong>';
+        statusDiv.className = 'mt-3 alert alert-info';
+        statusDiv.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        // Method 1: Client-side html5-qrcode
+        var scanner = new Html5Qrcode("upload-temp-reader");
+        scanner.scanFile(file, false)
+            .then(function(text) {
+                showUploadSuccess(text, statusDiv, resultDiv);
+            })
+            .catch(function() {
+                // Method 2: Send to server
+                statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> Deep scanning on server...';
+
+                var formData = new FormData();
+                formData.append('image', file);
+
+                fetch('/api/scan/image', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.found && data.barcode) {
+                        showUploadSuccess(data.barcode, statusDiv, resultDiv);
+                    } else {
+                        showUploadFail(statusDiv, resultDiv);
+                    }
+                })
+                .catch(function() {
+                    showUploadFail(statusDiv, resultDiv);
+                });
+            });
+    }
+
+    function showUploadSuccess(barcode, statusDiv, resultDiv) {
+        statusDiv.style.display = 'none';
+        try {
+            var ac = new (window.AudioContext || window.webkitAudioContext)();
+            var o = ac.createOscillator();
+            var g = ac.createGain();
+            o.connect(g); g.connect(ac.destination);
             o.frequency.value = 800; g.gain.value = 0.2;
             o.start(); setTimeout(function() { o.stop(); }, 150);
         } catch(e) {}
+        try { navigator.vibrate(200); } catch(e) {}
 
-        resultDiv.innerHTML = '✅ <strong>Barcode Found:</strong> <span class="fs-4">' + barcode + '</span>' +
-            '<br><span class="text-muted">Redirecting to product page...</span>';
+        resultDiv.innerHTML = '✅ <strong>Found:</strong> <span class="fs-4">' + barcode + '</span><br><span class="text-muted">Redirecting...</span>';
         resultDiv.className = 'mt-3 alert alert-success';
         resultDiv.style.display = 'block';
+        setTimeout(function() { window.location.href = '/result/' + encodeURIComponent(barcode); }, 800);
+    }
 
-        setTimeout(function() {
-            window.location.href = '/result/' + encodeURIComponent(barcode);
-        }, 1200);
+    function showUploadFail(statusDiv, resultDiv) {
+        statusDiv.style.display = 'none';
+        resultDiv.innerHTML = '❌ <strong>Could not detect barcode.</strong><br>' +
+            '📸 Use a clear, close photo of the barcode<br>' +
+            '📷 <strong>Camera scanning works best!</strong><br><br>' +
+            '<button class="btn btn-primary btn-sm" onclick="document.getElementById(\'gallery-upload\').click()">🖼️ Try Another</button>' +
+            ' <button class="btn btn-outline-primary btn-sm" onclick="switchToCamera()">📷 Camera</button>' +
+            ' <button class="btn btn-outline-secondary btn-sm" onclick="switchToManual()">⌨️ Manual</button>';
+        resultDiv.className = 'mt-3 alert alert-warning';
+        resultDiv.style.display = 'block';
     }
 
     // ============================================================
@@ -563,74 +411,25 @@
         document.getElementById('manual-barcode').value = code;
         lookupManualBarcode();
     }
-
     function lookupManualBarcode() {
         var barcode = document.getElementById('manual-barcode').value.trim();
-        var resultDiv = document.getElementById('manual-result');
-        
-        if (!barcode) {
-            resultDiv.innerHTML = '⚠️ Please enter a barcode number';
-            resultDiv.className = 'mt-3 alert alert-warning';
-            resultDiv.style.display = 'block';
-            return;
-        }
-
-        if (!/^\d+$/.test(barcode)) {
-            resultDiv.innerHTML = '⚠️ Barcode should contain only numbers';
-            resultDiv.className = 'mt-3 alert alert-warning';
-            resultDiv.style.display = 'block';
-            return;
-        }
-
-        resultDiv.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Looking up product...';
-        resultDiv.className = 'mt-3 alert alert-info';
-        resultDiv.style.display = 'block';
-
+        if (!barcode || !/^\d+$/.test(barcode)) return;
         window.location.href = '/result/' + encodeURIComponent(barcode);
     }
-
-    // ============================================================
-    // TAB SWITCHING HELPERS
-    // ============================================================
-    function switchToManual() {
-        var manualTab = document.getElementById('manual-tab');
-        var tab = new bootstrap.Tab(manualTab);
-        tab.show();
-    }
-
+    function switchToManual() { new bootstrap.Tab(document.getElementById('manual-tab')).show(); }
     function switchToCamera() {
-        var cameraTab = document.getElementById('camera-tab');
-        var tab = new bootstrap.Tab(cameraTab);
-        tab.show();
+        new bootstrap.Tab(document.getElementById('camera-tab')).show();
         setTimeout(function() { startScanner(); }, 500);
     }
 
-    // ============================================================
-    // AUTO-START and cleanup
-    // ============================================================
+    // Auto-start
     document.addEventListener('DOMContentLoaded', function() {
-        var statusDiv = document.getElementById('camera-status');
-        
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            statusDiv.innerHTML = '📷 Tap <strong>Start Camera</strong> to begin scanning';
-            setTimeout(function() {
-                startScanner();
-            }, 500);
-        } else {
-            statusDiv.innerHTML = '⚠️ Camera not available. Use Upload or Manual Entry.';
-            statusDiv.className = 'mt-3 alert alert-warning';
-        }
+        setTimeout(function() { startScanner(); }, 500);
     });
-
-    window.addEventListener('beforeunload', function() {
-        stopScanner();
-    });
-
+    window.addEventListener('beforeunload', function() { stopScanner(); });
     document.querySelectorAll('#scanTabs button').forEach(function(tab) {
         tab.addEventListener('shown.bs.tab', function(e) {
-            if (e.target.id !== 'camera-tab') {
-                stopScanner();
-            }
+            if (e.target.id !== 'camera-tab') stopScanner();
         });
     });
 </script>

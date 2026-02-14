@@ -67,6 +67,26 @@ def create_app(config_name='default'):
         history = product_service.get_scan_history(limit=100)
         return render_template('history.html', history=history)
 
+    @app.route('/api/scan/image', methods=['POST'])
+    def api_scan_image():
+        """API: Scan barcode from uploaded image on server"""
+        if 'image' not in request.files:
+            return jsonify({'found': False, 'error': 'No image provided'}), 400
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({'found': False, 'error': 'No file selected'}), 400
+        try:
+            image_bytes = file.read()
+            from services.image_scanner import ImageBarcodeScanner
+            scanner = ImageBarcodeScanner()
+            barcode, error = scanner.scan_image_bytes(image_bytes)
+            if barcode:
+                return jsonify({'found': True, 'barcode': barcode})
+            else:
+                return jsonify({'found': False, 'error': error or 'No barcode found'})
+        except Exception as e:
+            return jsonify({'found': False, 'error': str(e)})
+
     # ==================== API ROUTES ====================
 
     @app.route('/api/scan/upload', methods=['POST'])
