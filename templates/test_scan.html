@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BharatScan - Scanner Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial; max-width: 600px; margin: 20px auto; padding: 10px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .ok { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+        #test-video { width: 100%; max-width: 400px; background: #000; }
+        #test-canvas { display: none; }
+        #log { background: #1a1a1a; color: #0f0; padding: 15px; font-family: monospace; 
+               font-size: 12px; max-height: 300px; overflow-y: auto; border-radius: 5px; 
+               white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h2>🔧 BharatScan Scanner Test</h2>
+    <p>This page tests if barcode scanning works on your device.</p>
+
+    <h3>Test 1: Library Loading</h3>
+    <div id="lib-results"></div>
+
+    <h3>Test 2: Camera Access</h3>
+    <button onclick="testCamera()">📷 Test Camera</button>
+    <br>
+    <video id="test-video" autoplay playsinline></video>
+    <div id="camera-result"></div>
+
+    <h3>Test 3: Barcode Detection API</h3>
+    <button onclick="testBarcodeAPI()">🔍 Test Native API</button>
+    <div id="api-result"></div>
+
+    <h3>Test 4: Scan from Camera</h3>
+    <button onclick="startTestScan()">▶️ Start Scanning</button>
+    <button onclick="stopTestScan()">⏹️ Stop</button>
+    <div id="scan-result"></div>
+
+    <h3>Test 5: Scan from Image</h3>
+    <input type="file" id="test-upload" accept="image/*" capture="environment" onchange="testImageScan(event)">
+    <div id="image-result"></div>
+
+    <h3>Debug Log</h3>
+    <div id="log"></div>
+
+    <canvas id="test-canvas"></canvas>
+
+    <!-- Load libraries -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+
+    <script>
+        var logDiv = document.getElementById('log');
+        var videoStream = null;
+        var scanInterval = null;
+
+        function log(msg) {
+            var time = new Date().toLocaleTimeString();
+            logDiv.textContent += time + ': ' + msg + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+
+        // ============================
+        // TEST 1: Check if libraries loaded
+        // ============================
+        function testLibraries() {
+            var results = document.getElementById('lib-results');
+            var html = '';
+
+            // Check html5-qrcode
+            if (typeof Html5Qrcode !== 'undefined') {
+                html += '<div class="status ok">✅ html5-qrcode library loaded</div>';
+                log('html5-qrcode: LOADED');
+            } else {
+                html += '<div class="status fail">❌ html5-qrcode library NOT loaded</div>';
+                log('html5-qrcode: FAILED TO LOAD');
+            }
+
+            // Check ZXing
+            if (typeof ZXing !== 'undefined') {
+                html += '<div class="status ok">✅ ZXing library loaded</div>';
+                log('ZXing: LOADED');
+            } else {
+                html += '<div class="status fail">❌ ZXing library NOT loaded</div>';
+                log('ZXing: FAILED TO LOAD');
+            }
+
+            // Check BarcodeDetector API (native browser)
+            if (typeof BarcodeDetector !== 'undefined') {
+                html += '<div class="status ok">✅ Native BarcodeDetector API available</div>';
+                log('BarcodeDetector API: AVAILABLE');
+                
+                BarcodeDetector.getSupportedFormats().then(function(formats) {
+                    log('Supported formats: ' + formats.join(', '));
+                });
+            } else {
+                html += '<div class="status info">ℹ️ Native BarcodeDetector API not available (OK — using libraries instead)</div>';
+                log('BarcodeDetector API: NOT AVAILABLE');
+            }
+
+            // Check HTTPS
+            if (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                html += '<div class="status ok">✅ Secure context (HTTPS) — camera will work</div>';
+                log('HTTPS: YES');
+            } else {
+                html += '<div class="status fail">❌ NOT HTTPS — camera may not work</div>';
+                log('HTTPS: NO — camera needs HTTPS');
+            }
+
+            results.innerHTML = html;
+        }
+
+        // Run library test on page load
+        testLibraries();
+
+        // ============================
+        // TEST 2: Camera Access
+        // ============================
+        function testCamera() {
+            var result = document.getElementById('camera-result');
+            result.innerHTML = '<div class="status info">Starting camera...</div>';
+            log('Testing camera access...');
+
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            }).then(function(stream) {
+                videoStream = stream;
+                var video = document.getElementById('test-video');
+                video.srcObject = stream;
+                
+                var track = stream.getVideoTracks()[0];
+                var settings = track.getSettings();
+                
+                result.innerHTML = '<div class="status ok">✅ Camera working!<br>' +
+                    'Resolution: ' + settings.width + 'x' + settings.height + '<br>' +
+                    'Facing: ' + (settings.facingMode || 'unknown') + '</div>';
+                log('Camera OK: ' + settings.width + 'x' + settings.height);
+            }).catch(function(err) {
+                result.innerHTML = '<div class="status fail">❌ Camera error: ' + err.message + '</div>';
+                log('Camera ERROR: ' + err.message);
+            });
+        }
+
+        // ============================
+        // TEST 3: Native BarcodeDetector
+        // ============================
+        function testBarcodeAPI() {
+            var result = document.getElementById('api-result');
+            
+            if (typeof BarcodeDetector === 'undefined') {
+                result.innerHTML = '<div class="status info">ℹ️ BarcodeDetector not available on this browser. Will use ZXing/html5-qrcode instead.</div>';
+                log('BarcodeDetector: Not supported in this browser');
+                return;
+            }
+
+            var detector = new BarcodeDetector({ 
+                formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'qr_code'] 
+            });
+
+            result.innerHTML = '<div class="status ok">✅ BarcodeDetector created. Point camera at barcode and click "Start Scanning"</div>';
+            log('BarcodeDetector: Created successfully');
+        }
+
+        // ============================
+        // TEST 4: Live Camera Scanning
+        // ============================
+        function startTestScan() {
+            var result = document.getElementById('scan-result');
+            
+            if (!videoStream) {
+                result.innerHTML = '<div class="status fail">❌ Start camera first (Test 2)</div>';
+                return;
+            }
+
+            result.innerHTML = '<div class="status info">🔍 Scanning... point at a barcode</div>';
+            log('Starting live scan...');
+
+            var video = document.getElementById('test-video');
+            var canvas = document.getElementById('test-canvas');
+            var ctx = canvas.getContext('2d');
+
+            var scanCount = 0;
+
+            // Method A: Try native BarcodeDetector
+            if (typeof BarcodeDetector !== 'undefined') {
+                var detector = new BarcodeDetector({ 
+                    formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] 
+                });
+
+                scanInterval = setInterval(function() {
+                    scanCount++;
+                    if (scanCount % 30 === 0) {
+                        log('Scanned ' + scanCount + ' frames... still looking');
+                    }
+
+                    detector.detect(video).then(function(barcodes) {
+                        if (barcodes.length > 0) {
+                            var barcode = barcodes[0];
+                            log('FOUND BARCODE: ' + barcode.rawValue + ' (format: ' + barcode.format + ')');
+                            result.innerHTML = '<div class="status ok">✅ BARCODE FOUND: <strong>' + 
+                                barcode.rawValue + '</strong><br>Format: ' + barcode.format + '</div>';
+                            stopTestScan();
+                        }
+                    }).catch(function(err) {
+                        // Normal — no barcode in frame
+                    });
+                }, 100);
+
+                log('Using native BarcodeDetector — scanning every 100ms');
+            }
+            // Method B: Use ZXing
+            else if (typeof ZXing !== 'undefined') {
+                var reader = new ZXing.BrowserMultiFormatReader();
+                
+                scanInterval = setInterval(function() {
+                    scanCount++;
+                    if (scanCount % 30 === 0) {
+                        log('Scanned ' + scanCount + ' frames...');
+                    }
+
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0);
+
+                    var imgData = canvas.toDataURL('image/png');
+                    var tempImg = document.createElement('img');
+                    tempImg.onload = function() {
+                        reader.decodeFromImage(tempImg).then(function(res) {
+                            log('FOUND BARCODE: ' + res.getText());
+                            result.innerHTML = '<div class="status ok">✅ BARCODE FOUND: <strong>' + 
+                                res.getText() + '</strong></div>';
+                            stopTestScan();
+                        }).catch(function() {
+                            // No barcode found in this frame
+                        });
+                    };
+                    tempImg.src = imgData;
+                }, 200);
+
+                log('Using ZXing — scanning every 200ms');
+            }
+            else {
+                result.innerHTML = '<div class="status fail">❌ No scanning library available</div>';
+                log('ERROR: No scanning library loaded');
+            }
+        }
+
+        function stopTestScan() {
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+                log('Scanning stopped');
+            }
+        }
+
+        // ============================
+        // TEST 5: Image Upload Scan
+        // ============================
+        function testImageScan(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+
+            var result = document.getElementById('image-result');
+            result.innerHTML = '<div class="status info">Scanning uploaded image...</div>';
+            log('Image uploaded: ' + file.name + ' (' + Math.round(file.size/1024) + ' KB)');
+
+            var img = new Image();
+            img.onload = function() {
+                log('Image size: ' + img.width + 'x' + img.height);
+
+                var found = false;
+
+                // Try ZXing first
+                if (typeof ZXing !== 'undefined') {
+                    log('Trying ZXing on full image...');
+                    var reader = new ZXing.BrowserMultiFormatReader();
+                    
+                    reader.decodeFromImage(img).then(function(res) {
+                        log('ZXing FOUND: ' + res.getText() + ' (format: ' + res.getBarcodeFormat() + ')');
+                        result.innerHTML = '<div class="status ok">✅ ZXing found: <strong>' + res.getText() + '</strong></div>';
+                        found = true;
+                    }).catch(function(err) {
+                        log('ZXing failed on full image: ' + err);
+                        
+                        // Try with contrast enhancement
+                        log('Trying with enhanced contrast...');
+                        var canvas = document.getElementById('test-canvas');
+                        var ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Enhance contrast
+                        try {
+                            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            var data = imageData.data;
+                            for (var i = 0; i < data.length; i += 4) {
+                                var gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
+                                var bw = gray > 120 ? 255 : 0;
+                                data[i] = bw;
+                                data[i+1] = bw;
+                                data[i+2] = bw;
+                            }
+                            ctx.putImageData(imageData, 0, 0);
+                            
+                            var enhancedImg = new Image();
+                            enhancedImg.onload = function() {
+                                reader.decodeFromImage(enhancedImg).then(function(res2) {
+                                    log('ZXing FOUND (enhanced): ' + res2.getText());
+                                    result.innerHTML = '<div class="status ok">✅ Found (enhanced): <strong>' + res2.getText() + '</strong></div>';
+                                }).catch(function() {
+                                    log('ZXing failed on enhanced image too');
+                                    tryHtml5QrcodeImage(file, result);
+                                });
+                            };
+                            enhancedImg.src = canvas.toDataURL();
+                        } catch(e) {
+                            log('Enhancement error: ' + e);
+                            tryHtml5QrcodeImage(file, result);
+                        }
+                    });
+                } else {
+                    tryHtml5QrcodeImage(file, result);
+                }
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function tryHtml5QrcodeImage(file, result) {
+            if (typeof Html5Qrcode === 'undefined') {
+                result.innerHTML = '<div class="status fail">❌ No library could read the barcode</div>';
+                return;
+            }
+
+            log('Trying html5-qrcode on image...');
+            var tempDiv = document.getElementById('h5qr-temp');
+            if (!tempDiv) {
+                tempDiv = document.createElement('div');
+                tempDiv.id = 'h5qr-temp';
+                tempDiv.style.display = 'none';
+                document.body.appendChild(tempDiv);
+            }
+
+            var scanner = new Html5Qrcode("h5qr-temp");
+            scanner.scanFile(file, false).then(function(text) {
+                log('html5-qrcode FOUND: ' + text);
+                result.innerHTML = '<div class="status ok">✅ html5-qrcode found: <strong>' + text + '</strong></div>';
+            }).catch(function(err) {
+                log('html5-qrcode failed: ' + err);
+                result.innerHTML = '<div class="status fail">❌ No library could read the barcode.<br>' +
+                    'Try a clearer, closer photo of just the barcode.</div>';
+            });
+        }
+    </script>
+</body>
+</html>

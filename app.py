@@ -45,7 +45,11 @@ def create_app(config_name='default'):
         }
         return render_template('index.html', stats=stats)
 
-    @app.route('/scan')
+       @app.route('/test-scan')
+    def test_scan_page():
+        return render_template('test_scan.html')
+
+ @app.route('/scan')
     def scan_page():
         """Barcode scanning page"""
         return render_template('scan.html')
