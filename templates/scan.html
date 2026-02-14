@@ -34,23 +34,7 @@
                     <div class="card shadow-sm">
                         <div class="card-body text-center p-2">
                             
-                            <!-- QuaggaJS scanner viewport -->
-                            <div id="scanner-container" style="position: relative; width: 100%; max-width: 600px; margin: 0 auto; overflow: hidden; border-radius: 12px; background: #000;">
-                                <div id="interactive" class="viewport" style="width: 100%; height: 350px;"></div>
-                                <!-- Scanning line animation -->
-                                <div id="scan-line" style="position: absolute; top: 40%; left: 5%; right: 5%; height: 3px; background: #00ff00; box-shadow: 0 0 10px #00ff00; display: none; animation: scanMove 2s ease-in-out infinite;"></div>
-                                <!-- Scan area guide -->
-                                <div id="scan-guide" style="position: absolute; top: 25%; left: 5%; right: 5%; bottom: 25%; border: 2px solid rgba(0,255,0,0.5); border-radius: 8px; display: none;"></div>
-                            </div>
-
-                            <style>
-                                #interactive video { width: 100% !important; height: 350px !important; object-fit: cover; }
-                                #interactive canvas { display: none !important; }
-                                @keyframes scanMove {
-                                    0%, 100% { top: 30%; }
-                                    50% { top: 60%; }
-                                }
-                            </style>
+                            <div id="reader" style="width: 100%; max-width: 600px; margin: 0 auto;"></div>
                             
                             <div id="camera-status" class="mt-2">
                                 <span class="text-muted">Tap Start Camera to begin</span>
@@ -71,7 +55,7 @@
 
                             <div class="mt-2 p-2 bg-light rounded">
                                 <small class="text-muted">
-                                    📱 Point at barcode and hold steady. Works from normal distance.
+                                    📱 Hold barcode steady for 3-5 seconds. Good lighting helps.
                                 </small>
                             </div>
                         </div>
@@ -137,24 +121,23 @@
     </div>
 </div>
 
-<div id="upload-temp-reader" style="display: none;"></div>
+<div id="quagga-upload-target" style="display: none;"></div>
+<div id="h5qr-temp" style="display: none;"></div>
 <canvas id="work-canvas" style="display: none;"></canvas>
 {% endblock %}
 
 {% block extra_js %}
-<!-- QuaggaJS — FAST barcode scanner optimized for linear barcodes -->
-<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
-<!-- html5-qrcode as backup for file scanning -->
+<!-- html5-qrcode for CAMERA (proven working on iPhone Safari) -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- QuaggaJS for IMAGE upload scanning (better at finding barcodes in photos) -->
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
 
 <script>
+    var html5QrCode = null;
     var isScanning = false;
-    var lastDetected = '';
-    var detectionCount = 0;
-    var REQUIRED_DETECTIONS = 2;
 
     // ============================================================
-    // CAMERA SCANNER using QuaggaJS — FAST, works from DISTANCE
+    // CAMERA — html5-qrcode (proven working on iPhone 14 Safari)
     // ============================================================
     function startScanner() {
         var statusDiv = document.getElementById('camera-status');
@@ -164,97 +147,18 @@
         successDiv.style.display = 'none';
         errorDiv.style.display = 'none';
         statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> Starting camera...';
-        
+
         document.getElementById('btn-start').style.display = 'none';
         document.getElementById('btn-stop').style.display = 'inline-block';
 
-        lastDetected = '';
-        detectionCount = 0;
+        html5QrCode = new Html5Qrcode("reader");
 
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: document.querySelector('#interactive'),
-                constraints: {
-                    facingMode: "environment",
-                    width: { min: 1280, ideal: 1920 },
-                    height: { min: 720, ideal: 1080 },
-                    aspectRatio: { ideal: 1.7778 }
-                },
-                area: {
-                    top: "20%",
-                    right: "5%",
-                    left: "5%",
-                    bottom: "20%"
-                }
-            },
-            locator: {
-                patchSize: "medium",
-                halfSample: true
-            },
-            numOfWorkers: navigator.hardwareConcurrency ? Math.min(navigator.hardwareConcurrency, 4) : 2,
-            frequency: 20,
-            decoder: {
-                readers: [
-                    "ean_reader",
-                    "ean_8_reader",
-                    "upc_reader",
-                    "upc_e_reader",
-                    "code_128_reader",
-                    "code_39_reader"
-                ],
-                multiple: false
-            },
-            locate: true
-        }, function(err) {
-            if (err) {
-                console.error('Quagga init error:', err);
-                // Fallback to html5-qrcode
-                startHtml5QrCodeFallback();
-                return;
-            }
-
-            Quagga.start();
-            isScanning = true;
-
-            document.getElementById('scan-line').style.display = 'block';
-            document.getElementById('scan-guide').style.display = 'block';
-
-            statusDiv.innerHTML = '🟢 <span class="text-success"><strong>Camera active</strong> — point at any barcode</span>';
-        });
-
-        // Listen for barcode detection
-        Quagga.onDetected(function(result) {
-            if (!isScanning) return;
-
-            var code = result.codeResult.code;
-            var format = result.codeResult.format;
-
-            // Require same barcode detected twice for accuracy
-            if (code === lastDetected) {
-                detectionCount++;
-            } else {
-                lastDetected = code;
-                detectionCount = 1;
-            }
-
-            if (detectionCount >= REQUIRED_DETECTIONS) {
-                onBarcodeFound(code, format);
-            }
-        });
-    }
-
-    // Fallback scanner if QuaggaJS fails
-    function startHtml5QrCodeFallback() {
-        var statusDiv = document.getElementById('camera-status');
-        statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> Starting backup scanner...';
-
-        var scanner = new Html5Qrcode("interactive");
         var config = {
-            fps: 15,
-            qrbox: function(vw, vh) {
-                return { width: Math.floor(vw * 0.85), height: Math.floor(vh * 0.45) };
+            fps: 10,
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                var w = Math.floor(viewfinderWidth * 0.85);
+                var h = Math.floor(w * 0.4);
+                return { width: w, height: h };
             },
             formatsToSupport: [
                 Html5QrcodeSupportedFormats.EAN_13,
@@ -262,70 +166,69 @@
                 Html5QrcodeSupportedFormats.UPC_A,
                 Html5QrcodeSupportedFormats.UPC_E,
                 Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
                 Html5QrcodeSupportedFormats.QR_CODE
-            ]
+            ],
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: false
+            }
         };
 
-        scanner.start(
+        html5QrCode.start(
             { facingMode: "environment" },
             config,
-            function(text, result) {
-                onBarcodeFound(text, result.result.format.formatName);
-                scanner.stop().catch(function() {});
-            },
+            onCameraSuccess,
             function() {}
         ).then(function() {
             isScanning = true;
-            statusDiv.innerHTML = '🟢 <span class="text-success">Camera active — point at barcode</span>';
+            statusDiv.innerHTML = '🟢 <span class="text-success">Camera active — point at barcode, hold steady</span>';
         }).catch(function(err) {
-            statusDiv.innerHTML = '❌ Camera failed: ' + err;
-            document.getElementById('btn-start').style.display = 'inline-block';
-            document.getElementById('btn-stop').style.display = 'none';
+            html5QrCode.start(
+                { facingMode: "user" },
+                config,
+                onCameraSuccess,
+                function() {}
+            ).then(function() {
+                isScanning = true;
+                statusDiv.innerHTML = '🟢 Camera active (front)';
+            }).catch(function(err2) {
+                errorDiv.innerHTML = '❌ Camera error. Allow permission and retry.<br>' +
+                    '<button class="btn btn-primary btn-sm mt-2" onclick="startScanner()">🔄 Retry</button>';
+                errorDiv.style.display = 'block';
+                statusDiv.style.display = 'none';
+                document.getElementById('btn-start').style.display = 'inline-block';
+                document.getElementById('btn-stop').style.display = 'none';
+            });
         });
     }
 
-    function onBarcodeFound(code, format) {
-        isScanning = false;
+    function onCameraSuccess(decodedText, decodedResult) {
         stopScanner();
 
-        document.getElementById('detected-barcode').textContent = code;
+        document.getElementById('detected-barcode').textContent = decodedText;
         document.getElementById('scan-success').style.display = 'block';
         document.getElementById('camera-status').style.display = 'none';
-        document.getElementById('scan-line').style.display = 'none';
-        document.getElementById('scan-guide').style.display = 'none';
 
-        // Beep
-        try {
-            var ac = new (window.AudioContext || window.webkitAudioContext)();
-            var o = ac.createOscillator();
-            var g = ac.createGain();
-            o.connect(g); g.connect(ac.destination);
-            o.frequency.value = 800; g.gain.value = 0.3;
-            o.start(); setTimeout(function() { o.stop(); }, 200);
-        } catch(e) {}
-
-        // Vibrate if supported
-        try { navigator.vibrate(200); } catch(e) {}
+        playBeep();
 
         setTimeout(function() {
-            window.location.href = '/result/' + encodeURIComponent(code);
-        }, 600);
+            window.location.href = '/result/' + encodeURIComponent(decodedText);
+        }, 800);
     }
 
     function stopScanner() {
-        try {
-            Quagga.stop();
-        } catch(e) {}
-        isScanning = false;
-        document.getElementById('scan-line').style.display = 'none';
-        document.getElementById('scan-guide').style.display = 'none';
-        document.getElementById('camera-status').innerHTML = '⏸️ Camera stopped';
-        document.getElementById('btn-start').style.display = 'inline-block';
-        document.getElementById('btn-stop').style.display = 'none';
+        if (html5QrCode && isScanning) {
+            html5QrCode.stop().then(function() {
+                isScanning = false;
+                document.getElementById('camera-status').innerHTML = '⏸️ Stopped';
+                document.getElementById('btn-start').style.display = 'inline-block';
+                document.getElementById('btn-stop').style.display = 'none';
+            }).catch(function() { isScanning = false; });
+        }
     }
 
     // ============================================================
-    // UPLOAD — sends to SERVER for Python scanning
+    // UPLOAD — 4 methods: QuaggaJS, html5-qrcode, Server, Enhanced
     // ============================================================
     function handleUpload(event) {
         var file = event.target.files[0];
@@ -338,68 +241,281 @@
         previewImg.src = URL.createObjectURL(file);
         document.getElementById('upload-preview').style.display = 'block';
 
-        statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <strong>Scanning...</strong>';
+        statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <strong>Scanning barcode (Method 1 of 4)...</strong>';
         statusDiv.className = 'mt-3 alert alert-info';
         statusDiv.style.display = 'block';
         resultDiv.style.display = 'none';
 
-        // Method 1: Client-side html5-qrcode
-        var scanner = new Html5Qrcode("upload-temp-reader");
+        // Method 1: QuaggaJS decodeSingle (best for barcodes in photos)
+        tryQuaggaScan(file, statusDiv, resultDiv);
+    }
+
+    // Method 1: QuaggaJS — specifically designed for barcode detection in images
+    function tryQuaggaScan(file, statusDiv, resultDiv) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            Quagga.decodeSingle({
+                src: e.target.result,
+                numOfWorkers: 0,
+                inputStream: {
+                    size: 1920
+                },
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                },
+                decoder: {
+                    readers: [
+                        "ean_reader",
+                        "ean_8_reader",
+                        "upc_reader",
+                        "upc_e_reader",
+                        "code_128_reader",
+                        "code_39_reader"
+                    ]
+                },
+                locate: true
+            }, function(result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    showUploadSuccess(result.codeResult.code, statusDiv, resultDiv);
+                } else {
+                    // Try with different settings
+                    statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <strong>Method 2 of 4...</strong>';
+                    tryQuaggaLarge(file, statusDiv, resultDiv);
+                }
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Method 2: QuaggaJS with larger scan area
+    function tryQuaggaLarge(file, statusDiv, resultDiv) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            Quagga.decodeSingle({
+                src: e.target.result,
+                numOfWorkers: 0,
+                inputStream: {
+                    size: 2560
+                },
+                locator: {
+                    patchSize: "large",
+                    halfSample: false
+                },
+                decoder: {
+                    readers: [
+                        "ean_reader",
+                        "ean_8_reader",
+                        "upc_reader",
+                        "upc_e_reader",
+                        "code_128_reader"
+                    ]
+                },
+                locate: true
+            }, function(result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    showUploadSuccess(result.codeResult.code, statusDiv, resultDiv);
+                } else {
+                    statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <strong>Method 3 of 4...</strong>';
+                    tryHtml5QrCodeScan(file, statusDiv, resultDiv);
+                }
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Method 3: html5-qrcode scanFile
+    function tryHtml5QrCodeScan(file, statusDiv, resultDiv) {
+        var scanner = new Html5Qrcode("h5qr-temp");
         scanner.scanFile(file, false)
             .then(function(text) {
                 showUploadSuccess(text, statusDiv, resultDiv);
             })
             .catch(function() {
-                // Method 2: Send to server
-                statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> Deep scanning on server...';
-
-                var formData = new FormData();
-                formData.append('image', file);
-
-                fetch('/api/scan/image', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    if (data.found && data.barcode) {
-                        showUploadSuccess(data.barcode, statusDiv, resultDiv);
-                    } else {
-                        showUploadFail(statusDiv, resultDiv);
-                    }
-                })
-                .catch(function() {
-                    showUploadFail(statusDiv, resultDiv);
-                });
+                statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <strong>Method 4 of 4 — Server scan...</strong>';
+                tryServerScan(file, statusDiv, resultDiv);
             });
+    }
+
+    // Method 4: Send to server for Python scanning
+    function tryServerScan(file, statusDiv, resultDiv) {
+        var formData = new FormData();
+        formData.append('image', file);
+
+        fetch('/api/scan/image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.found && data.barcode) {
+                showUploadSuccess(data.barcode, statusDiv, resultDiv);
+            } else {
+                // Try enhanced image on server
+                tryEnhancedServerScan(file, statusDiv, resultDiv);
+            }
+        })
+        .catch(function() {
+            tryEnhancedServerScan(file, statusDiv, resultDiv);
+        });
+    }
+
+    // Method 4b: Enhance image then send to server
+    function tryEnhancedServerScan(file, statusDiv, resultDiv) {
+        var img = new Image();
+        img.onload = function() {
+            var canvas = document.getElementById('work-canvas');
+            var ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            // Black and white enhancement
+            try {
+                var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                var data = imageData.data;
+                for (var i = 0; i < data.length; i += 4) {
+                    var gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
+                    data[i] = data[i+1] = data[i+2] = gray > 120 ? 255 : 0;
+                }
+                ctx.putImageData(imageData, 0, 0);
+            } catch(e) {}
+
+            canvas.toBlob(function(blob) {
+                if (!blob) {
+                    showUploadFail(statusDiv, resultDiv);
+                    return;
+                }
+
+                // Try QuaggaJS on enhanced image
+                var enhancedUrl = URL.createObjectURL(blob);
+                Quagga.decodeSingle({
+                    src: enhancedUrl,
+                    numOfWorkers: 0,
+                    inputStream: { size: 1920 },
+                    locator: { patchSize: "large", halfSample: false },
+                    decoder: {
+                        readers: ["ean_reader", "ean_8_reader", "upc_reader", "code_128_reader"]
+                    },
+                    locate: true
+                }, function(result) {
+                    URL.revokeObjectURL(enhancedUrl);
+                    if (result && result.codeResult && result.codeResult.code) {
+                        showUploadSuccess(result.codeResult.code, statusDiv, resultDiv);
+                    } else {
+                        // Send enhanced to server too
+                        var formData = new FormData();
+                        formData.append('image', blob, 'enhanced.png');
+
+                        fetch('/api/scan/image', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (data.found && data.barcode) {
+                                showUploadSuccess(data.barcode, statusDiv, resultDiv);
+                            } else {
+                                // Try QuaggaJS on image regions
+                                tryRegionScans(img, statusDiv, resultDiv);
+                            }
+                        })
+                        .catch(function() {
+                            tryRegionScans(img, statusDiv, resultDiv);
+                        });
+                    }
+                });
+            }, 'image/png');
+        };
+        img.src = URL.createObjectURL(file);
+    }
+
+    // Method 5: Scan different regions of the image with QuaggaJS
+    function tryRegionScans(img, statusDiv, resultDiv) {
+        statusDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> <strong>Scanning image regions...</strong>';
+
+        var canvas = document.getElementById('work-canvas');
+        var ctx = canvas.getContext('2d');
+
+        var regions = [
+            { x: 0, y: 0.5, w: 1.0, h: 0.5 },
+            { x: 0, y: 0.6, w: 1.0, h: 0.4 },
+            { x: 0, y: 0, w: 1.0, h: 0.5 },
+            { x: 0.1, y: 0.3, w: 0.8, h: 0.5 },
+            { x: 0, y: 0.3, w: 1.0, h: 0.4 },
+            { x: 0, y: 0, w: 0.5, h: 1.0 },
+            { x: 0.5, y: 0, w: 0.5, h: 1.0 },
+            { x: 0, y: 0.5, w: 0.5, h: 0.5 },
+            { x: 0.5, y: 0.5, w: 0.5, h: 0.5 }
+        ];
+
+        var rIdx = 0;
+
+        function tryNextRegion() {
+            if (rIdx >= regions.length) {
+                showUploadFail(statusDiv, resultDiv);
+                return;
+            }
+
+            var r = regions[rIdx];
+            var sx = Math.floor(img.width * r.x);
+            var sy = Math.floor(img.height * r.y);
+            var sw = Math.floor(img.width * r.w);
+            var sh = Math.floor(img.height * r.h);
+
+            canvas.width = sw;
+            canvas.height = sh;
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+
+            canvas.toBlob(function(blob) {
+                if (!blob) { rIdx++; tryNextRegion(); return; }
+
+                var regionUrl = URL.createObjectURL(blob);
+                Quagga.decodeSingle({
+                    src: regionUrl,
+                    numOfWorkers: 0,
+                    inputStream: { size: 1280 },
+                    locator: { patchSize: "medium", halfSample: true },
+                    decoder: {
+                        readers: ["ean_reader", "ean_8_reader", "upc_reader", "code_128_reader"]
+                    },
+                    locate: true
+                }, function(result) {
+                    URL.revokeObjectURL(regionUrl);
+                    if (result && result.codeResult && result.codeResult.code) {
+                        showUploadSuccess(result.codeResult.code, statusDiv, resultDiv);
+                    } else {
+                        rIdx++;
+                        tryNextRegion();
+                    }
+                });
+            }, 'image/png');
+        }
+
+        tryNextRegion();
     }
 
     function showUploadSuccess(barcode, statusDiv, resultDiv) {
         statusDiv.style.display = 'none';
-        try {
-            var ac = new (window.AudioContext || window.webkitAudioContext)();
-            var o = ac.createOscillator();
-            var g = ac.createGain();
-            o.connect(g); g.connect(ac.destination);
-            o.frequency.value = 800; g.gain.value = 0.2;
-            o.start(); setTimeout(function() { o.stop(); }, 150);
-        } catch(e) {}
-        try { navigator.vibrate(200); } catch(e) {}
+        playBeep();
 
         resultDiv.innerHTML = '✅ <strong>Found:</strong> <span class="fs-4">' + barcode + '</span><br><span class="text-muted">Redirecting...</span>';
         resultDiv.className = 'mt-3 alert alert-success';
         resultDiv.style.display = 'block';
-        setTimeout(function() { window.location.href = '/result/' + encodeURIComponent(barcode); }, 800);
+
+        setTimeout(function() {
+            window.location.href = '/result/' + encodeURIComponent(barcode);
+        }, 800);
     }
 
     function showUploadFail(statusDiv, resultDiv) {
         statusDiv.style.display = 'none';
-        resultDiv.innerHTML = '❌ <strong>Could not detect barcode.</strong><br>' +
-            '📸 Use a clear, close photo of the barcode<br>' +
-            '📷 <strong>Camera scanning works best!</strong><br><br>' +
-            '<button class="btn btn-primary btn-sm" onclick="document.getElementById(\'gallery-upload\').click()">🖼️ Try Another</button>' +
-            ' <button class="btn btn-outline-primary btn-sm" onclick="switchToCamera()">📷 Camera</button>' +
-            ' <button class="btn btn-outline-secondary btn-sm" onclick="switchToManual()">⌨️ Manual</button>';
+        resultDiv.innerHTML = '❌ <strong>Could not detect barcode.</strong><br><br>' +
+            '<strong>📷 Camera scanning works best!</strong><br>' +
+            'The camera scanner detected barcodes perfectly.<br><br>' +
+            '<button class="btn btn-primary btn-sm" onclick="switchToCamera()">📷 Use Camera Instead</button>' +
+            ' <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById(\'gallery-upload\').click()">🖼️ Try Another Photo</button>' +
+            ' <button class="btn btn-outline-secondary btn-sm" onclick="switchToManual()">⌨️ Enter Manually</button>';
         resultDiv.className = 'mt-3 alert alert-warning';
         resultDiv.style.display = 'block';
     }
@@ -411,15 +527,29 @@
         document.getElementById('manual-barcode').value = code;
         lookupManualBarcode();
     }
+
     function lookupManualBarcode() {
         var barcode = document.getElementById('manual-barcode').value.trim();
         if (!barcode || !/^\d+$/.test(barcode)) return;
         window.location.href = '/result/' + encodeURIComponent(barcode);
     }
+
     function switchToManual() { new bootstrap.Tab(document.getElementById('manual-tab')).show(); }
     function switchToCamera() {
         new bootstrap.Tab(document.getElementById('camera-tab')).show();
         setTimeout(function() { startScanner(); }, 500);
+    }
+
+    function playBeep() {
+        try {
+            var ac = new (window.AudioContext || window.webkitAudioContext)();
+            var o = ac.createOscillator();
+            var g = ac.createGain();
+            o.connect(g); g.connect(ac.destination);
+            o.frequency.value = 800; g.gain.value = 0.3;
+            o.start(); setTimeout(function() { o.stop(); }, 200);
+        } catch(e) {}
+        try { navigator.vibrate(200); } catch(e) {}
     }
 
     // Auto-start
